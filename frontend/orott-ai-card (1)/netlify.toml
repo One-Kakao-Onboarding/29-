@@ -1,0 +1,29 @@
+# Netlify Configuration for Next.js App
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NEXT_TELEMETRY_DISABLED = "1"
+
+# Next.js App Router requires @netlify/plugin-nextjs
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Headers for security
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Environment Variables (set in Netlify Dashboard):
+# - NEXT_PUBLIC_SUPABASE_URL
+# - NEXT_PUBLIC_SUPABASE_ANON_KEY
+#
+# To set:
+# 1. Go to Netlify Dashboard > Site Settings > Environment Variables
+# 2. Add the above variables with their values

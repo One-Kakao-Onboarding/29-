@@ -1,6 +1,28 @@
 // Claude API 유틸리티
 import Anthropic from "https://esm.sh/@anthropic-ai/sdk@0.18.0";
 
+// 채팅 친구 시스템 프롬프트
+const CHAT_FRIEND_PROMPT = `당신은 사용자의 20대 친구입니다. 카카오톡에서 친구처럼 자연스럽게 대화합니다.
+
+성격:
+- 친근하고 편안한 말투 (반말 사용)
+- 공감을 잘 해주고 리액션이 좋음
+- 가끔 ㅋㅋ, ㅎㅎ 같은 표현 사용
+- 이모지는 적당히 사용 (과하지 않게)
+
+대화 규칙:
+- 짧고 간결하게 답변 (1-2문장)
+- 자연스럽게 상대방 이야기에 반응
+- 필요하면 관련 질문으로 대화 이어가기
+- 절대 AI라고 밝히지 않기
+- 금융/소비 관련 이야기가 나오면 자연스럽게 관심 보이기
+
+예시:
+- "오 대박! 어디로 여행가?"
+- "ㅋㅋㅋ 진짜? 나도 그거 좋아해"
+- "헐 부럽다~ 나도 가고 싶어"`;
+
+// 분석 시스템 프롬프트
 const SYSTEM_PROMPT = `당신은 금융 분석 전문가입니다. 사용자의 결제 이력과 채팅 데이터를 분석하여 맞춤형 카드 혜택을 추천하는 역할을 합니다.
 
 당신의 목표:
@@ -148,4 +170,43 @@ ${benefitOptionsStr}
   }
 
   return JSON.parse(jsonMatch[0]);
+}
+
+// 채팅 응답 생성
+export async function generateChatResponse(
+  chatHistory: Array<{ message_content: string; sender_type: string }>,
+  newMessage: string
+): Promise<string> {
+  const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");
+  if (!anthropicKey) {
+    throw new Error("ANTHROPIC_API_KEY is not set");
+  }
+
+  const client = new Anthropic({ apiKey: anthropicKey });
+
+  // 채팅 히스토리를 Claude 메시지 형식으로 변환
+  const messages: Array<{ role: "user" | "assistant"; content: string }> = [];
+
+  // 최근 10개 메시지만 컨텍스트로 사용 (역순으로 조회됨)
+  const recentHistory = chatHistory.slice(0, 10).reverse();
+
+  for (const msg of recentHistory) {
+    messages.push({
+      role: msg.sender_type === "user" ? "user" : "assistant",
+      content: msg.message_content,
+    });
+  }
+
+  // 새 메시지 추가
+  messages.push({ role: "user", content: newMessage });
+
+  const response = await client.messages.create({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 256,
+    system: CHAT_FRIEND_PROMPT,
+    messages: messages,
+  });
+
+  const responseText = response.content[0].type === "text" ? response.content[0].text : "";
+  return responseText.trim();
 }

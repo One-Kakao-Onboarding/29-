@@ -173,3 +173,29 @@ export async function getUser(supabase: SupabaseClient, userId: string) {
   if (error) throw error;
   return data;
 }
+
+// 채팅 메시지 저장
+export async function saveChatMessage(
+  supabase: SupabaseClient,
+  userId: string,
+  chatRoomId: string,
+  messageContent: string,
+  senderType: "user" | "ai"
+): Promise<{ id: string; sent_at: string }> {
+  const now = new Date().toISOString();
+
+  const { data, error } = await supabase
+    .from("chat_logs")
+    .insert({
+      user_id: userId,
+      chat_room_id: chatRoomId,
+      message_content: messageContent,
+      sender_type: senderType,
+      sent_at: now,
+    })
+    .select("id, sent_at")
+    .single();
+
+  if (error) throw error;
+  return data;
+}
