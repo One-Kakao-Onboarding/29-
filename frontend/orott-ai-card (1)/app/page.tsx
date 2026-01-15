@@ -357,13 +357,14 @@ export default function Home() {
 
       // Add message if not already present (avoid duplicates)
       setChatMessages((prev) => {
-        // Skip if it's my own message (already added locally)
-        if (isFromMe && newMessage.sender_type === "user") {
-          const isDuplicate = prev.some(
-            (m) => m.message === newMessage.message_content && m.sender === "me"
-          )
-          if (isDuplicate) return prev
+        // Skip current user's messages (already added locally from API response)
+        if (isFromMe) {
+          // User messages are added in handleSendMessage before API call
+          // AI responses are added in handleSendMessage after API call
+          // So we skip ALL messages from current user to avoid duplicates
+          return prev
         }
+        // Only add messages from OTHER users (global chat feature)
         return [...prev, chatMsg]
       })
     })
