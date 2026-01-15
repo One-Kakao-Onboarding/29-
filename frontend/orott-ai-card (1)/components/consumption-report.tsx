@@ -23,20 +23,21 @@ interface ConsumptionReportProps {
   payments?: Payment[];
   previousPayments?: Payment[] | null;
   currentTimePoint?: TimePoint;
+  userName?: string;
 }
 
-// Consumer type mapping
-const typeMap: Record<string, { code: string; name: string; description: string }> = {
-  마트: { code: "HOME", name: "홈라이프 소비자", description: "집에서 보내는 시간이 늘어난 실속파 소비 패턴" },
-  배달: { code: "FAST", name: "효율형 소비자", description: "시간을 아끼는 스마트한 소비 패턴" },
-  카페: { code: "CAFE", name: "커피러버 소비자", description: "일상에서 작은 여유를 즐기는 소비 패턴" },
-  쇼핑: { code: "SHOP", name: "트렌드 소비자", description: "패션과 라이프스타일에 관심 많은 소비 패턴" },
-  OTT: { code: "PLAY", name: "엔터테이너 소비자", description: "콘텐츠와 여가를 즐기는 소비 패턴" },
-  공항: { code: "TRIP", name: "여행러 소비자", description: "새로운 경험을 추구하는 활동적인 소비 패턴" },
-  교통: { code: "MOVE", name: "액티브 소비자", description: "이동이 많고 활동적인 라이프스타일" },
-  편의점: { code: "CONV", name: "편의형 소비자", description: "간편하고 빠른 것을 선호하는 소비 패턴" },
-  주유: { code: "DRIV", name: "드라이버 소비자", description: "자동차 중심의 생활을 하는 소비 패턴" },
-  영화관: { code: "CINE", name: "시네필 소비자", description: "문화생활을 즐기는 소비 패턴" },
+// Consumer type mapping - 라이프스타일 유형
+const typeMap: Record<string, { code: string; name: string; description: string; emoji: string }> = {
+  마트: { code: "HOME", name: "홈라이프형", description: "집에서 보내는 시간이 늘어난 실속파", emoji: "🏠" },
+  배달: { code: "FAST", name: "효율추구형", description: "시간을 아끼는 스마트한 라이프스타일", emoji: "⚡" },
+  카페: { code: "CAFE", name: "카페러버형", description: "일상에서 작은 여유를 즐기는 스타일", emoji: "☕" },
+  쇼핑: { code: "SHOP", name: "트렌드세터형", description: "패션과 라이프스타일에 관심 많은 스타일", emoji: "👗" },
+  OTT: { code: "PLAY", name: "홈시네마형", description: "콘텐츠와 여가를 집에서 즐기는 스타일", emoji: "🎬" },
+  공항: { code: "TRIP", name: "여행러형", description: "새로운 경험을 추구하는 활동적인 스타일", emoji: "✈️" },
+  교통: { code: "MOVE", name: "액티브무버형", description: "이동이 많고 활동적인 라이프스타일", emoji: "🚇" },
+  편의점: { code: "CONV", name: "편의추구형", description: "간편하고 빠른 것을 선호하는 스타일", emoji: "🏪" },
+  주유: { code: "DRIV", name: "드라이버형", description: "자동차 중심의 활동적인 라이프스타일", emoji: "🚗" },
+  영화관: { code: "CINE", name: "시네필형", description: "극장에서 문화생활을 즐기는 스타일", emoji: "🎥" },
 };
 
 /**
@@ -111,7 +112,7 @@ function generateReportFromPayments(
 
   // Determine consumer type from top category
   const topCategory = sortedCategories[0]?.category || "카페";
-  const type = typeMap[topCategory] || typeMap["카페"];
+  const type = typeMap[topCategory] || typeMap["카페"] || mockReportData.type;
 
   // Calculate estimated savings (10% of total)
   const totalSavings = Math.round(currentTotal * 0.1);
@@ -142,8 +143,9 @@ const mockReportData = {
   ],
   type: {
     code: "HOME",
-    name: "홈라이프 소비자",
-    description: "집에서 보내는 시간이 늘어난 실속파 소비 패턴",
+    name: "홈라이프형",
+    description: "집에서 보내는 시간이 늘어난 실속파",
+    emoji: "🏠",
   },
   totalSavings: 156000,
 };
@@ -191,7 +193,7 @@ function transformApiData(reportData: AnnualReportResponse) {
 
   // Determine consumer type based on top categories
   const topNewCategory = new_pattern[0]?.category || "카페";
-  const type = typeMap[topNewCategory] || mockReportData.type;
+  const type = typeMap[topNewCategory] || typeMap["카페"] || mockReportData.type;
 
   return {
     radarData,
@@ -209,6 +211,7 @@ export function ConsumptionReport({
   payments,
   previousPayments,
   currentTimePoint,
+  userName = "사용자",
 }: ConsumptionReportProps) {
   // Transform API data, generate from payments, or use mock data
   const { radarData, changes, type, totalSavings } = useMemo(() => {
@@ -252,7 +255,10 @@ export function ConsumptionReport({
     >
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-[#191919]">소비 패턴 리포트</h3>
+        <div>
+          <h3 className="text-lg font-bold text-[#191919]">연간 소비 분석 리포트</h3>
+          <p className="text-xs text-[#767676] mt-0.5">카드는 그대로, 혜택은 매년 새롭게</p>
+        </div>
         <button
           onClick={onClose}
           className="p-2 hover:bg-[#F7F7F7] active:bg-[#E5E5E5] rounded-xl transition-colors"
@@ -261,38 +267,50 @@ export function ConsumptionReport({
         </button>
       </div>
 
-      {/* Consumer Type Badge */}
+      {/* Consumer Type Badge - 라이프스타일 변화 감지 */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.1 }}
-        className="bg-[#FEE500]/10 rounded-2xl p-5 text-center"
+        className="bg-gradient-to-br from-[#FEE500]/20 to-[#FEE500]/5 rounded-2xl p-5 text-center border border-[#FEE500]/30"
       >
-        <span className="text-[#191919]/60 font-bold text-3xl tracking-widest">
+        <div className="text-4xl mb-2">{"emoji" in type ? type.emoji : "🎯"}</div>
+        <span className="text-[#191919]/50 font-bold text-xs tracking-widest">
           {type.code}
         </span>
-        <p className="text-[#191919] font-semibold text-lg mt-2">{type.name}</p>
+        <p className="text-[#191919] font-bold text-xl mt-1">{type.name}</p>
         <p className="text-[#767676] text-sm mt-1">{type.description}</p>
+        <div className="mt-3 inline-block bg-[#191919] text-white text-xs font-medium px-3 py-1 rounded-full">
+          라이프스타일 변화 감지
+        </div>
       </motion.div>
 
-      {/* Summary */}
+      {/* Summary - AI 분석 결과 */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
         className="bg-white rounded-2xl p-4 space-y-3 shadow-sm border border-[#E5E5E5]"
       >
-        <p className="text-[#555555] text-sm leading-relaxed">
-          홍길동님, {previousPeriod}과 비교해봤어요.
-          <br />
-          <span className="text-[#191919] font-semibold">
-            라이프스타일이 많이 바뀌었네요!
-          </span>
-        </p>
-        <div className="text-sm text-[#767676] space-y-1">
+        <div className="flex items-start gap-2">
+          <span className="text-lg">🤖</span>
+          <div>
+            <p className="text-[#555555] text-sm leading-relaxed">
+              {userName}님, {previousPeriod}과 비교해봤어요.
+              <br />
+              <span className="text-[#191919] font-semibold">
+                라이프스타일이 많이 바뀌었네요!
+              </span>
+            </p>
+          </div>
+        </div>
+        <div className="text-sm text-[#767676] space-y-1.5 pl-7">
           {changes.slice(0, 4).map((item, idx) => (
-            <p key={idx}>
-              • {item.category}에서{" "}
+            <p key={idx} className="flex items-center gap-1">
+              <span className={item.direction === "up" ? "text-[#DC3545]" : "text-[#3182F6]"}>
+                {item.direction === "up" ? "↑" : "↓"}
+              </span>
+              {item.category}에서{" "}
               <span className="text-[#191919] font-medium">
                 {item.change.toLocaleString()}원
               </span>{" "}
@@ -301,14 +319,15 @@ export function ConsumptionReport({
           ))}
         </div>
         {totalSavings > 0 && (
-          <div className="pt-2 border-t border-[#E5E5E5]">
+          <div className="pt-3 border-t border-[#E5E5E5] flex items-center justify-between">
             <p className="text-[#191919] text-sm">
-              지금까지 약{" "}
+              오롯 혜택으로 총{" "}
               <span className="font-bold text-[#191919]">
                 {totalSavings.toLocaleString()}원
               </span>{" "}
-              절약했어요 🎉
+              절약
             </p>
+            <span className="text-xl">🎉</span>
           </div>
         )}
       </motion.div>
@@ -359,14 +378,14 @@ export function ConsumptionReport({
         </div>
       </div>
 
-      {/* Changes List */}
+      {/* Changes List - 카테고리별 변화 */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
         className="space-y-2"
       >
-        <p className="text-sm text-[#767676] px-1 font-medium">주요 변화</p>
+        <p className="text-sm text-[#767676] px-1 font-medium">카테고리별 소비 변화</p>
         {changes.slice(0, 4).map((item, idx) => (
           <div
             key={idx}
@@ -394,19 +413,23 @@ export function ConsumptionReport({
         ))}
       </motion.div>
 
-      {/* Rebuild Button */}
+      {/* Rebuild Button - 원클릭 혜택 업데이트 */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
+        className="space-y-2"
       >
         <Button
           onClick={onRebuild}
           className="w-full py-6 bg-[#191919] text-white font-semibold text-sm hover:bg-[#333333] rounded-xl transition-colors"
         >
-          <RefreshCw className="w-4 h-4 mr-2" />새 라이프스타일에 맞게 혜택
-          바꾸기
+          <RefreshCw className="w-4 h-4 mr-2" />
+          원클릭 혜택 리모델링
         </Button>
+        <p className="text-center text-xs text-[#999999]">
+          카드 재발급 없이 바로 적용
+        </p>
       </motion.div>
     </motion.div>
   );

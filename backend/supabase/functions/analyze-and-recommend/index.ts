@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { user_id, chat_room_id, analysis_period_months = 12, payments } = await req.json();
+    const { user_id, chat_room_id, analysis_period_months = 12, payments, chat_messages } = await req.json();
 
     if (!user_id) {
       return new Response(
@@ -47,8 +47,18 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 3. 채팅 로그 조회
-    const chatLogs = await getChatLogs(supabase, user_id, chat_room_id);
+    // 3. 채팅 로그 (프론트엔드 데이터 우선, 없으면 DB 조회)
+    let chatLogs;
+    if (chat_messages && Array.isArray(chat_messages) && chat_messages.length > 0) {
+      // 프론트엔드에서 전달받은 채팅 데이터 변환
+      chatLogs = chat_messages.map((msg: { sender: string; message: string }) => ({
+        message_content: msg.message,
+        sender_type: msg.sender === "me" ? "user" : "ai",
+      }));
+    } else {
+      // DB에서 조회
+      chatLogs = await getChatLogs(supabase, user_id, chat_room_id);
+    }
 
     // 4. 현재 혜택 조회
     const currentBenefits = await getUserBenefits(supabase, user_id);

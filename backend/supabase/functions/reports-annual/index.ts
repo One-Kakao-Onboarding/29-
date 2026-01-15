@@ -6,6 +6,7 @@ import {
   getUser,
   getPaymentHistory,
   getPaymentSummaryByCategory,
+  getUserBenefits,
 } from "../_shared/supabase.ts";
 
 Deno.serve(async (req) => {
@@ -32,7 +33,20 @@ Deno.serve(async (req) => {
     // 1. 사용자 확인
     await getUser(supabase, user_id);
 
-    // 2. 결제 내역 조회
+    // 2. 사용자 혜택 조회 (절감액 계산용)
+    const userBenefits = await getUserBenefits(supabase, user_id);
+
+    // 카테고리별 할인율 매핑 생성
+    const categoryDiscountRates: Record<string, number> = {};
+    for (const benefit of userBenefits) {
+      const category = benefit.benefit_options?.category;
+      const discountRate = benefit.custom_discount_rate || benefit.benefit_options?.max_discount_rate || 0;
+      if (category) {
+        categoryDiscountRates[category] = discountRate / 100; // 퍼센트를 소수로 변환
+      }
+    }
+
+    // 3. 결제 내역 조회
     const payments = await getPaymentHistory(supabase, user_id, 12);
 
     if (payments.length === 0) {
@@ -87,8 +101,13 @@ Deno.serve(async (req) => {
           ([, a], [, b]) => b - a
         )[0]?.[0] || "없음";
 
-        // 예상 절감액 (총 지출의 3%)
-        const savings = Math.round(data.total_spending * 0.03);
+        // 실제 혜택 기반 절감액 계산
+        // 각 카테고리별 지출에 해당 카테고리의 할인율 적용
+        let savings = 0;
+        for (const [category, amount] of Object.entries(data.categories)) {
+          const discountRate = categoryDiscountRates[category] || 0.03; // 혜택 없으면 기본 3%
+          savings += Math.round(amount * discountRate);
+        }
 
         return {
           month,

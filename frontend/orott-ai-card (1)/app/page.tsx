@@ -15,6 +15,7 @@ import {
   isApiConfigured,
   TEST_USER_ID,
 } from "@/services/api"
+import { subscribeToGlobalChat, type RealtimeChatMessage } from "@/services/supabase"
 import type { AnnualReportResponse, RecommendedBenefit } from "@/services/types"
 
 /**
@@ -151,106 +152,108 @@ export const paymentPresets: Record<string, PaymentPreset> = {
 }
 
 // Fallback benefits for demo mode (when API is not configured)
+// 현실적 밸런스: 5개 혜택 합계 약 월 20,000원 한도
 const fallbackBenefits: Benefit[] = [
   {
     id: "1",
-    title: "카페",
-    discount: "10% 캐시백",
+    title: "스타벅스",
+    discount: "10% 할인 (월 3천원)",
     icon: "☕",
-    reason: "카페에서 32,000원 사용",
+    reason: "카페 자주 이용",
     reasonIcon: "💳",
     category: "카페",
     color: "#22c55e",
   },
   {
     id: "2",
-    title: "배달",
-    discount: "3,000원 할인",
+    title: "배달의민족",
+    discount: "5% 할인 (월 3천원)",
     icon: "🛵",
-    reason: "배달 이용이 잦아요",
+    reason: "배달 지출 많음",
     reasonIcon: "📊",
     category: "배달",
     color: "#eab308",
   },
   {
     id: "3",
-    title: "OTT",
-    discount: "1개월 무료",
+    title: "넷플릭스",
+    discount: "월 5천원 할인",
     icon: "🎬",
-    reason: "결제일이 곧 다가와요",
+    reason: "OTT 구독 중",
     reasonIcon: "📅",
     category: "OTT",
     color: "#ef4444",
   },
-]
-
-const fallbackAlternatives: Benefit[] = [
   {
-    id: "alt1",
-    title: "편의점",
-    discount: "20% 캐시백",
-    icon: "🏪",
-    reason: "편의점 자주 가시네요",
-    reasonIcon: "💳",
-    category: "편의점",
-    color: "#a855f7",
-  },
-  {
-    id: "alt2",
-    title: "영화관",
-    discount: "50% 할인",
-    icon: "🎥",
-    reason: "여가 활동이 많아요",
-    reasonIcon: "📅",
-    category: "영화관",
-    color: "#f97316",
-  },
-  {
-    id: "alt3",
-    title: "교통",
-    discount: "10% 할인",
+    id: "4",
+    title: "대중교통",
+    discount: "10% 할인 (월 5천원)",
     icon: "🚇",
-    reason: "출퇴근비를 아껴드려요",
+    reason: "출퇴근 교통비",
     reasonIcon: "📊",
     category: "교통",
     color: "#3b82f6",
   },
   {
-    id: "alt4",
-    title: "마트",
-    discount: "10% 할인",
+    id: "5",
+    title: "CU",
+    discount: "5% 할인 (월 2천원)",
+    icon: "🏪",
+    reason: "편의점 자주 이용",
+    reasonIcon: "💳",
+    category: "편의점",
+    color: "#a855f7",
+  },
+]
+// 총합: 3,000 + 3,000 + 5,000 + 5,000 + 2,000 = 18,000원
+
+const fallbackAlternatives: Benefit[] = [
+  {
+    id: "alt1",
+    title: "CGV",
+    discount: "6천원 할인 (월 1회)",
+    icon: "🎥",
+    reason: "영화 자주 봄",
+    reasonIcon: "📅",
+    category: "영화관",
+    color: "#f97316",
+  },
+  {
+    id: "alt2",
+    title: "이마트",
+    discount: "5% 할인 (월 3천원)",
     icon: "🛒",
-    reason: "마트 이용이 늘고 있어요",
+    reason: "마트 이용 많음",
     reasonIcon: "📊",
     category: "마트",
     color: "#a16207",
   },
   {
-    id: "alt5",
-    title: "주유",
-    discount: "5% 캐시백",
+    id: "alt3",
+    title: "SK주유소",
+    discount: "L당 60원 (월 3천원)",
     icon: "⛽",
-    reason: "주유 지출이 있어요",
+    reason: "주유 지출 있음",
     reasonIcon: "💳",
     category: "주유",
     color: "#84cc16",
   },
   {
-    id: "alt6",
-    title: "쇼핑",
-    discount: "10% 할인",
+    id: "alt4",
+    title: "무신사",
+    discount: "5% 할인 (월 3천원)",
     icon: "👕",
-    reason: "온라인 쇼핑을 좋아해요",
-    reasonIcon: "💳",
+    reason: "쇼핑 관심 감지",
+    reasonIcon: "💬",
     category: "쇼핑",
     color: "#ec4899",
   },
   {
-    id: "alt7",
-    title: "공항",
-    discount: "라운지 무료",
+    id: "alt5",
+    title: "공항라운지",
+    discount: "1회 무료 (월 5천원)",
     icon: "✈️",
-    reason: "여행 계획이 있으시네요",
+    reason: "여행 계획 감지",
     reasonIcon: "💬",
     category: "공항",
     color: "#06b6d4",
@@ -332,6 +335,44 @@ export default function Home() {
     loadChatHistory()
   }, [chatRoomId])
 
+  // Subscribe to real-time chat messages (global feed - everyone sees all messages)
+  useEffect(() => {
+    if (!isApiConfigured()) return
+
+    const unsubscribe = subscribeToGlobalChat((newMessage: RealtimeChatMessage) => {
+      // Format the time
+      const sentAt = new Date(newMessage.sent_at)
+      const timeStr = `${sentAt.getHours() > 12 ? "오후" : "오전"} ${sentAt.getHours() % 12 || 12}:${String(sentAt.getMinutes()).padStart(2, "0")}`
+
+      // Check if this message is from the current user (same user_id)
+      const isFromMe = newMessage.user_id === TEST_USER_ID
+
+      const chatMsg: ChatMessage = {
+        sender: newMessage.sender_type === "ai" ? "ai" : (isFromMe ? "me" : "me"),
+        message: isFromMe
+          ? newMessage.message_content
+          : `[익명] ${newMessage.message_content}`,
+        time: timeStr,
+      }
+
+      // Add message if not already present (avoid duplicates)
+      setChatMessages((prev) => {
+        // Skip if it's my own message (already added locally)
+        if (isFromMe && newMessage.sender_type === "user") {
+          const isDuplicate = prev.some(
+            (m) => m.message === newMessage.message_content && m.sender === "me"
+          )
+          if (isDuplicate) return prev
+        }
+        return [...prev, chatMsg]
+      })
+    })
+
+    return () => {
+      unsubscribe()
+    }
+  }, [])
+
   /**
    * Analyze spending patterns and get AI recommendations
    * Falls back to demo data if API is not configured
@@ -352,15 +393,22 @@ export default function Home() {
     }
 
     try {
+      // 채팅 메시지를 API 형식으로 변환
+      const chatMessagesForApi = chatMessages.map((msg) => ({
+        sender: msg.sender === "me" ? "me" as const : "ai" as const,
+        message: msg.message,
+      }))
+
       const response = await analyzeAndRecommend({
         user_id: TEST_USER_ID,
         chat_room_id: chatRoomId,
         analysis_period_months: 12,
         payments: currentPayments,
+        chat_messages: chatMessagesForApi,
       })
 
       // Transform recommended benefits to frontend format
-      const recommendedBenefits = response.recommended_benefits.slice(0, 3)
+      const recommendedBenefits = response.recommended_benefits.slice(0, 5)
       const transformedBenefits = recommendedBenefits.map(transformToBenefit)
 
       // Store mapping for later confirmation
@@ -371,7 +419,7 @@ export default function Home() {
       setBenefitOptionMap(mapping)
 
       // Remaining benefits become alternatives
-      const remainingBenefits = response.recommended_benefits.slice(3)
+      const remainingBenefits = response.recommended_benefits.slice(5)
       const transformedAlternatives = remainingBenefits.map(transformToBenefit)
 
       setBenefits(transformedBenefits)
@@ -537,17 +585,25 @@ export default function Home() {
     }
 
     try {
+      // 채팅 메시지를 API 형식으로 변환
+      const chatMessagesForApi = chatMessages.map((msg) => ({
+        sender: msg.sender === "me" ? "me" as const : "ai" as const,
+        message: msg.message,
+      }))
+
       // Re-analyze with fresh data
       const response = await analyzeAndRecommend({
         user_id: TEST_USER_ID,
         chat_room_id: chatRoomId,
         analysis_period_months: 3, // Focus on recent 3 months for lifestyle change
+        payments: currentPayments,
+        chat_messages: chatMessagesForApi,
       })
 
-      const recommendedBenefits = response.recommended_benefits.slice(0, 3)
+      const recommendedBenefits = response.recommended_benefits.slice(0, 5)
       const transformedBenefits = recommendedBenefits.map(transformToBenefit)
 
-      const remainingBenefits = response.recommended_benefits.slice(3)
+      const remainingBenefits = response.recommended_benefits.slice(5)
       const transformedAlternatives = remainingBenefits.map(transformToBenefit)
 
       setBenefits(transformedBenefits)

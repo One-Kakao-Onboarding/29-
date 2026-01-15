@@ -14,11 +14,17 @@ export interface PaymentData {
   category: string;
 }
 
+export interface ChatMessageData {
+  sender: "me" | "ai";
+  message: string;
+}
+
 export interface AnalyzeRequest {
   user_id: string;
   chat_room_id?: string;
   analysis_period_months?: number;
   payments?: PaymentData[];
+  chat_messages?: ChatMessageData[];
 }
 
 export interface ConfirmBenefitsRequest {

@@ -257,7 +257,20 @@ function formatDiscount(
   rate: number,
   limit: number
 ): string {
-  const limitText = limit > 0 ? ` (월 ${(limit / 10000).toFixed(0)}만원 한도)` : "";
+  // 월 한도를 천원 단위로 표시 (현실적인 카드 혜택)
+  const formatLimit = (amt: number) => {
+    if (amt >= 10000) {
+      return `${(amt / 10000).toFixed(0)}만원`;
+    }
+    return `${(amt / 1000).toFixed(0)}천원`;
+  };
+
+  const limitText = limit > 0 ? ` (월 ${formatLimit(limit)})` : "";
+
+  // 정액 할인 처리 (rate가 1000 이상이면 정액으로 간주)
+  if (rate >= 1000) {
+    return `${formatLimit(rate)} 할인${limitText}`;
+  }
 
   switch (type) {
     case "discount":
@@ -266,6 +279,8 @@ function formatDiscount(
       return `${rate}% 캐시백${limitText}`;
     case "points":
       return `${rate}배 포인트${limitText}`;
+    case "fixed":
+      return `${formatLimit(rate)} 할인${limitText}`;
     default:
       return `${rate}% 할인${limitText}`;
   }
