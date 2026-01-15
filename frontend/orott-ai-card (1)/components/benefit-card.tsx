@@ -39,9 +39,9 @@ export function BenefitCard({ benefit, index, alternatives, onSwap }: BenefitCar
             </div>
             <p className="font-bold text-base text-white">{benefit.discount}</p>
 
-            <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-1 bg-white/5 border border-white/10 rounded-full">
-              <span className="text-xs">{benefit.reasonIcon}</span>
-              <span className="text-[10px] text-gray-300 font-medium truncate">{benefit.reason}</span>
+            <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-1 bg-white/5 border border-white/10 rounded-full max-w-full">
+              <span className="text-xs flex-shrink-0">{benefit.reasonIcon}</span>
+              <span className="text-[10px] text-gray-300 font-medium truncate max-w-[120px]">{benefit.reason}</span>
             </div>
           </div>
         </div>

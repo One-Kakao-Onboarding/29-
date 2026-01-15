@@ -234,12 +234,17 @@ export async function getChatHistory(
  * Transform API RecommendedBenefit to frontend Benefit format
  */
 export function transformToBenefit(rec: RecommendedBenefit): Benefit {
+  // Truncate reason to 15 characters max
+  const truncatedReason = rec.reason.length > 15
+    ? rec.reason.slice(0, 15) + "…"
+    : rec.reason;
+
   return {
     id: rec.benefit_option_id,
     title: rec.benefit_name,
     discount: formatDiscount(rec.benefit_type, rec.discount_rate, rec.monthly_limit),
     icon: CATEGORY_ICONS[rec.category] || "💳",
-    reason: rec.reason,
+    reason: truncatedReason,
     reasonIcon: getReasonIcon(rec.reason),
     category: rec.category,
     color: CATEGORY_COLORS[rec.category] || "#6b7280",
