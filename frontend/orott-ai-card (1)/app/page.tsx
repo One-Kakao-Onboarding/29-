@@ -152,60 +152,40 @@ export const paymentPresets: Record<string, PaymentPreset> = {
 }
 
 // Fallback benefits for demo mode (when API is not configured)
-// 현실적 밸런스: 5개 혜택 합계 약 월 20,000원 한도
+// 3개 혜택 합계 약 월 11,000원 한도
 const fallbackBenefits: Benefit[] = [
   {
     id: "1",
     title: "스타벅스",
     discount: "10% 할인 (월 3천원)",
     icon: "☕",
-    reason: "카페 자주 이용",
-    reasonIcon: "💳",
+    reason: "커피 자주 언급",
+    reasonIcon: "💬",
     category: "카페",
     color: "#22c55e",
   },
   {
     id: "2",
-    title: "배달의민족",
-    discount: "5% 할인 (월 3천원)",
-    icon: "🛵",
-    reason: "배달 지출 많음",
-    reasonIcon: "📊",
-    category: "배달",
-    color: "#eab308",
-  },
-  {
-    id: "3",
     title: "넷플릭스",
     discount: "월 5천원 할인",
     icon: "🎬",
-    reason: "OTT 구독 중",
-    reasonIcon: "📅",
+    reason: "OTT 관심 감지",
+    reasonIcon: "💬",
     category: "OTT",
     color: "#ef4444",
   },
   {
-    id: "4",
-    title: "대중교통",
-    discount: "10% 할인 (월 5천원)",
-    icon: "🚇",
-    reason: "출퇴근 교통비",
-    reasonIcon: "📊",
-    category: "교통",
-    color: "#3b82f6",
-  },
-  {
-    id: "5",
-    title: "CU",
-    discount: "5% 할인 (월 2천원)",
-    icon: "🏪",
-    reason: "편의점 자주 이용",
+    id: "3",
+    title: "배달의민족",
+    discount: "5% 할인 (월 3천원)",
+    icon: "🛵",
+    reason: "배달 지출 많음",
     reasonIcon: "💳",
-    category: "편의점",
-    color: "#a855f7",
+    category: "배달",
+    color: "#eab308",
   },
 ]
-// 총합: 3,000 + 3,000 + 5,000 + 5,000 + 2,000 = 18,000원
+// 총합: 3,000 + 5,000 + 3,000 = 11,000원
 
 const fallbackAlternatives: Benefit[] = [
   {
@@ -409,7 +389,7 @@ export default function Home() {
       })
 
       // Transform recommended benefits to frontend format
-      const recommendedBenefits = response.recommended_benefits.slice(0, 5)
+      const recommendedBenefits = response.recommended_benefits.slice(0, 3)
       const transformedBenefits = recommendedBenefits.map(transformToBenefit)
 
       // Store mapping for later confirmation
@@ -601,7 +581,7 @@ export default function Home() {
         chat_messages: chatMessagesForApi,
       })
 
-      const recommendedBenefits = response.recommended_benefits.slice(0, 5)
+      const recommendedBenefits = response.recommended_benefits.slice(0, 3)
       const transformedBenefits = recommendedBenefits.map(transformToBenefit)
 
       const remainingBenefits = response.recommended_benefits.slice(5)
