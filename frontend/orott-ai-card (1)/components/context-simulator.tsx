@@ -124,7 +124,9 @@ export function ContextSimulator({
   const [inputValue, setInputValue] = useState("")
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [isSending, setIsSending] = useState(false)
+  const [isComposing, setIsComposing] = useState(false)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (scrollContainerRef.current) {
@@ -133,17 +135,21 @@ export function ContextSimulator({
   }, [chatMessages])
 
   const handleSend = useCallback(() => {
-    if (!inputValue.trim() || isSending) return
+    if (!inputValue.trim() || isSending || isComposing) return
     setIsSending(true)
     const message = inputValue.trim()
     setInputValue("")
+    // 입력창 직접 초기화 (IME 버퍼 클리어)
+    if (inputRef.current) {
+      inputRef.current.value = ""
+    }
     onSendMessage(message)
     // 짧은 딜레이 후 다시 전송 가능하게
     setTimeout(() => setIsSending(false), 100)
-  }, [inputValue, isSending, onSendMessage])
+  }, [inputValue, isSending, isComposing, onSendMessage])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey && !isComposing) {
       e.preventDefault()
       handleSend()
     }
@@ -153,6 +159,15 @@ export function ContextSimulator({
     e.preventDefault()
     e.stopPropagation()
     handleSend()
+  }
+
+  const handleCompositionStart = () => {
+    setIsComposing(true)
+  }
+
+  const handleCompositionEnd = (e: React.CompositionEvent<HTMLInputElement>) => {
+    setIsComposing(false)
+    setInputValue(e.currentTarget.value)
   }
 
   const currentPayments = paymentPresets[selectedPaymentPreset]
@@ -228,9 +243,12 @@ export function ContextSimulator({
             <div className="p-3 border-t border-gray-200 bg-white flex-shrink-0">
               <div className="flex gap-2">
                 <Input
+                  ref={inputRef}
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={handleKeyDown}
+                  onCompositionStart={handleCompositionStart}
+                  onCompositionEnd={handleCompositionEnd}
                   placeholder="메시지를 입력하세요..."
                   className="flex-1 bg-gray-50 border-gray-200"
                 />

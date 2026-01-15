@@ -143,6 +143,30 @@ export interface ChatResponse {
 }
 
 // ============================================================================
+// Chat History Types
+// ============================================================================
+
+export interface ChatHistoryRequest {
+  user_id: string;
+  chat_room_id: string;
+  limit?: number;
+}
+
+export interface ChatHistoryMessage {
+  id: string;
+  sender: "me" | "ai";
+  message: string;
+  time: string;
+  timestamp: string;
+}
+
+export interface ChatHistoryResponse {
+  chat_room_id: string;
+  messages: ChatHistoryMessage[];
+  count: number;
+}
+
+// ============================================================================
 // API Error Type
 // ============================================================================
 

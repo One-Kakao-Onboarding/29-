@@ -14,6 +14,8 @@ import type {
   RecommendedBenefit,
   ChatRequest,
   ChatResponse,
+  ChatHistoryRequest,
+  ChatHistoryResponse,
 } from "./types";
 
 // ============================================================================
@@ -203,6 +205,24 @@ export async function sendChatMessage(
   return apiFetch<ChatResponse>("/chat", {
     method: "POST",
     body: JSON.stringify(request),
+  });
+}
+
+/**
+ * Get chat history for a chat room
+ * GET /chat-history
+ */
+export async function getChatHistory(
+  request: ChatHistoryRequest
+): Promise<ChatHistoryResponse> {
+  const params = new URLSearchParams({
+    user_id: request.user_id,
+    chat_room_id: request.chat_room_id,
+  });
+  if (request.limit) params.append("limit", request.limit.toString());
+
+  return apiFetch<ChatHistoryResponse>(`/chat-history?${params}`, {
+    method: "GET",
   });
 }
 

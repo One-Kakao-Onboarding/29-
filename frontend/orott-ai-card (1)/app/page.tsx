@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ContextSimulator } from "@/components/context-simulator"
 import { OrottService } from "@/components/oroft-service"
 import { Sparkles, FastForward } from "lucide-react"
@@ -10,6 +10,7 @@ import {
   analyzeAndRecommend,
   getAnnualReport,
   sendChatMessage,
+  getChatHistory,
   transformToBenefit,
   isApiConfigured,
   TEST_USER_ID,
@@ -182,12 +183,50 @@ export default function Home() {
   const [reportData, setReportData] = useState<AnnualReportResponse | null>(null)
   const [isReportLoading, setIsReportLoading] = useState(false)
 
-  // Chat room ID for this session (persists across messages)
-  const [chatRoomId] = useState(() => crypto.randomUUID())
+  // Chat room ID - persisted in localStorage to maintain chat history across page reloads
+  const [chatRoomId] = useState(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("orott_chat_room_id")
+      if (stored) return stored
+      const newId = crypto.randomUUID()
+      localStorage.setItem("orott_chat_room_id", newId)
+      return newId
+    }
+    return crypto.randomUUID()
+  })
   const [isSending, setIsSending] = useState(false)
 
   // Store benefit_option_id mapping for API confirmation
   const [benefitOptionMap, setBenefitOptionMap] = useState<Map<string, RecommendedBenefit>>(new Map())
+
+  // Load chat history on mount
+  useEffect(() => {
+    if (!isApiConfigured()) return
+
+    const loadChatHistory = async () => {
+      try {
+        const response = await getChatHistory({
+          user_id: TEST_USER_ID,
+          chat_room_id: chatRoomId,
+          limit: 50,
+        })
+
+        if (response.messages.length > 0) {
+          const loadedMessages: ChatMessage[] = response.messages.map((msg) => ({
+            sender: msg.sender,
+            message: msg.message,
+            time: msg.time,
+          }))
+          setChatMessages(loadedMessages)
+        }
+      } catch (error) {
+        // Silently fail - chat history is optional
+        console.log("No previous chat history found")
+      }
+    }
+
+    loadChatHistory()
+  }, [chatRoomId])
 
   /**
    * Analyze spending patterns and get AI recommendations
@@ -325,6 +364,13 @@ export default function Home() {
 
   const handleClearChat = () => {
     setChatMessages([])
+    // Generate new chat room ID for fresh conversation
+    if (typeof window !== "undefined") {
+      const newId = crypto.randomUUID()
+      localStorage.setItem("orott_chat_room_id", newId)
+      // Reload to apply new chatRoomId
+      window.location.reload()
+    }
   }
 
   const handleSwapBenefit = (id: string, newBenefit: Benefit) => {
