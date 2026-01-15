@@ -1,0 +1,24 @@
+# Render Blueprint - AI Dynamic Custom Card Backend
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: ai-dynamic-card-backend
+    runtime: python
+    region: singapore  # 한국에서 가장 가까운 리전
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: SUPABASE_URL
+        value: https://fvlanbsclsewkfypomlr.supabase.co
+      - key: SUPABASE_KEY
+        sync: false  # Dashboard에서 수동 입력
+      - key: ANTHROPIC_API_KEY
+        sync: false  # Dashboard에서 수동 입력
+      - key: CORS_ORIGINS
+        value: http://localhost:3000,https://29292929jojojojojojo.netlify.app
+      - key: PYTHON_VERSION
+        value: "3.11"
+    healthCheckPath: /health
+    autoDeploy: true
