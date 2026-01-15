@@ -184,24 +184,31 @@ export default function Home() {
   const [isReportLoading, setIsReportLoading] = useState(false)
 
   // Chat room ID - persisted in localStorage to maintain chat history across page reloads
-  const [chatRoomId] = useState(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("orott_chat_room_id")
-      if (stored) return stored
-      const newId = crypto.randomUUID()
-      localStorage.setItem("orott_chat_room_id", newId)
-      return newId
-    }
-    return crypto.randomUUID()
-  })
+  const [chatRoomId, setChatRoomId] = useState<string>("")
   const [isSending, setIsSending] = useState(false)
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true)
 
   // Store benefit_option_id mapping for API confirmation
   const [benefitOptionMap, setBenefitOptionMap] = useState<Map<string, RecommendedBenefit>>(new Map())
 
-  // Load chat history on mount
+  // Initialize chatRoomId from localStorage on client mount
   useEffect(() => {
-    if (!isApiConfigured()) return
+    const stored = localStorage.getItem("orott_chat_room_id")
+    if (stored) {
+      setChatRoomId(stored)
+    } else {
+      const newId = crypto.randomUUID()
+      localStorage.setItem("orott_chat_room_id", newId)
+      setChatRoomId(newId)
+    }
+  }, [])
+
+  // Load chat history after chatRoomId is set
+  useEffect(() => {
+    if (!chatRoomId || !isApiConfigured()) {
+      setIsLoadingHistory(false)
+      return
+    }
 
     const loadChatHistory = async () => {
       try {
@@ -222,6 +229,8 @@ export default function Home() {
       } catch (error) {
         // Silently fail - chat history is optional
         console.log("No previous chat history found")
+      } finally {
+        setIsLoadingHistory(false)
       }
     }
 
@@ -303,7 +312,7 @@ export default function Home() {
    * Handle chat message - calls AI API and saves to database
    */
   const handleSendMessage = async (message: string) => {
-    if (isSending) return
+    if (isSending || !chatRoomId) return
 
     const now = new Date()
     const timeStr = `${now.getHours() > 12 ? "오후" : "오전"} ${now.getHours() % 12 || 12}:${String(now.getMinutes()).padStart(2, "0")}`
@@ -365,12 +374,9 @@ export default function Home() {
   const handleClearChat = () => {
     setChatMessages([])
     // Generate new chat room ID for fresh conversation
-    if (typeof window !== "undefined") {
-      const newId = crypto.randomUUID()
-      localStorage.setItem("orott_chat_room_id", newId)
-      // Reload to apply new chatRoomId
-      window.location.reload()
-    }
+    const newId = crypto.randomUUID()
+    localStorage.setItem("orott_chat_room_id", newId)
+    setChatRoomId(newId)
   }
 
   const handleSwapBenefit = (id: string, newBenefit: Benefit) => {
