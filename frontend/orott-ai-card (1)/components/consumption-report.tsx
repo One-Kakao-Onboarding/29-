@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { X, RefreshCw, TrendingUp, TrendingDown, Loader2 } from "lucide-react";
+import { X, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Radar,
@@ -26,18 +26,18 @@ interface ConsumptionReportProps {
   userName?: string;
 }
 
-// Consumer type mapping - 라이프스타일 유형
-const typeMap: Record<string, { code: string; name: string; description: string; emoji: string }> = {
-  마트: { code: "HOME", name: "홈라이프형", description: "집에서 보내는 시간이 늘어난 실속파", emoji: "🏠" },
-  배달: { code: "FAST", name: "효율추구형", description: "시간을 아끼는 스마트한 라이프스타일", emoji: "⚡" },
-  카페: { code: "CAFE", name: "카페러버형", description: "일상에서 작은 여유를 즐기는 스타일", emoji: "☕" },
-  쇼핑: { code: "SHOP", name: "트렌드세터형", description: "패션과 라이프스타일에 관심 많은 스타일", emoji: "👗" },
-  OTT: { code: "PLAY", name: "홈시네마형", description: "콘텐츠와 여가를 집에서 즐기는 스타일", emoji: "🎬" },
-  공항: { code: "TRIP", name: "여행러형", description: "새로운 경험을 추구하는 활동적인 스타일", emoji: "✈️" },
-  교통: { code: "MOVE", name: "액티브무버형", description: "이동이 많고 활동적인 라이프스타일", emoji: "🚇" },
-  편의점: { code: "CONV", name: "편의추구형", description: "간편하고 빠른 것을 선호하는 스타일", emoji: "🏪" },
-  주유: { code: "DRIV", name: "드라이버형", description: "자동차 중심의 활동적인 라이프스타일", emoji: "🚗" },
-  영화관: { code: "CINE", name: "시네필형", description: "극장에서 문화생활을 즐기는 스타일", emoji: "🎥" },
+// Consumer type mapping - 친근하고 위트있는 라이프스타일 유형
+const typeMap: Record<string, { name: string; description: string; emoji: string }> = {
+  마트: { name: "살림 고수", description: "알뜰하게 장보는 현명한 소비자", emoji: "🛒" },
+  배달: { name: "집콕 미식가", description: "맛있는 건 배달로! 집에서 즐기는 미식", emoji: "🍕" },
+  카페: { name: "카페 단골손님", description: "커피 한 잔의 여유를 아는 사람", emoji: "☕" },
+  쇼핑: { name: "패션 피플", description: "트렌드를 읽고 스타일을 완성하는", emoji: "👗" },
+  OTT: { name: "집순이 소비자", description: "이동이 적고 콘텐츠를 즐기는 라이프스타일", emoji: "📺" },
+  공항: { name: "여행 덕후", description: "새로운 곳을 탐험하는 게 행복인 사람", emoji: "✈️" },
+  교통: { name: "바쁜 일상러", description: "이동이 많은 활동적인 라이프스타일", emoji: "🚇" },
+  편의점: { name: "편세권 주민", description: "편의점이 곧 내 냉장고인 사람", emoji: "🏪" },
+  주유: { name: "도로 위 자유인", description: "차와 함께하는 자유로운 라이프스타일", emoji: "🚗" },
+  영화관: { name: "영화관 단골", description: "큰 화면과 팝콘을 사랑하는 시네필", emoji: "🎬" },
 };
 
 /**
@@ -126,26 +126,26 @@ function generateReportFromPayments(
 }
 
 // Fallback mock data for demo mode (when no payments provided)
+// 예시: 이전에는 교통/편의점 중심 → 현재는 OTT/배달/영화관 중심 (집순이 변신)
 const mockReportData = {
   radarData: [
-    { category: "마트", old: 25, new: 65 },
-    { category: "배달", old: 45, new: 75 },
-    { category: "카페", old: 70, new: 40 },
-    { category: "쇼핑", old: 65, new: 55 },
-    { category: "편의점", old: 30, new: 60 },
-    { category: "OTT", old: 50, new: 45 },
+    { category: "OTT", old: 20, new: 75 },
+    { category: "배달", old: 30, new: 70 },
+    { category: "영화관", old: 25, new: 65 },
+    { category: "교통", old: 70, new: 25 },
+    { category: "편의점", old: 60, new: 30 },
+    { category: "카페", old: 55, new: 40 },
   ],
   changes: [
-    { category: "마트", change: 250000, direction: "up" as const },
-    { category: "배달", change: 180000, direction: "up" as const },
-    { category: "편의점", change: 120000, direction: "up" as const },
-    { category: "카페", change: 85000, direction: "down" as const },
+    { category: "OTT", change: 98000, direction: "up" as const },
+    { category: "배달", change: 85000, direction: "up" as const },
+    { category: "영화관", change: 70000, direction: "up" as const },
+    { category: "교통", change: 65000, direction: "down" as const },
   ],
   type: {
-    code: "HOME",
-    name: "홈라이프형",
-    description: "집에서 보내는 시간이 늘어난 실속파",
-    emoji: "🏠",
+    name: "집순이 소비자",
+    description: "이동이 적고 콘텐츠를 즐기는 라이프스타일",
+    emoji: "📺",
   },
   totalSavings: 156000,
 };
@@ -267,65 +267,56 @@ export function ConsumptionReport({
         </button>
       </div>
 
-      {/* Consumer Type Badge - 라이프스타일 변화 감지 */}
+      {/* Consumer Type Badge - 라이프스타일 유형 */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.1 }}
-        className="bg-gradient-to-br from-[#FEE500]/20 to-[#FEE500]/5 rounded-2xl p-5 text-center border border-[#FEE500]/30"
+        className="bg-gradient-to-br from-[#FEE500]/30 to-[#FEE500]/10 rounded-2xl p-6 text-center border border-[#FEE500]/40"
       >
-        <div className="text-4xl mb-2">{"emoji" in type ? type.emoji : "🎯"}</div>
-        <span className="text-[#191919]/50 font-bold text-xs tracking-widest">
-          {type.code}
-        </span>
-        <p className="text-[#191919] font-bold text-xl mt-1">{type.name}</p>
-        <p className="text-[#767676] text-sm mt-1">{type.description}</p>
-        <div className="mt-3 inline-block bg-[#191919] text-white text-xs font-medium px-3 py-1 rounded-full">
-          라이프스타일 변화 감지
-        </div>
+        <div className="text-5xl mb-3">{type.emoji}</div>
+        <p className="text-[#191919] font-bold text-2xl">{type.name}</p>
+        <p className="text-[#555555] text-sm mt-2">{type.description}</p>
       </motion.div>
 
-      {/* Summary - AI 분석 결과 */}
+      {/* User greeting */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        className="text-center py-2"
+      >
+        <p className="text-[#191919] text-lg">
+          <span className="font-bold">{userName}</span>님,
+        </p>
+      </motion.div>
+
+      {/* Spending Changes - 지출 변화 요약 */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="bg-white rounded-2xl p-4 space-y-3 shadow-sm border border-[#E5E5E5]"
+        className="bg-white rounded-2xl p-4 shadow-sm border border-[#E5E5E5]"
       >
-        <div className="flex items-start gap-2">
-          <span className="text-lg">🤖</span>
-          <div>
-            <p className="text-[#555555] text-sm leading-relaxed">
-              {userName}님, {previousPeriod}과 비교해봤어요.
-              <br />
-              <span className="text-[#191919] font-semibold">
-                라이프스타일이 많이 바뀌었네요!
+        <div className="space-y-3">
+          {changes.slice(0, 3).map((item, idx) => (
+            <div key={idx} className="flex items-center justify-between">
+              <span className="text-[#191919] text-sm">
+                <span className="font-medium">{item.category}</span>에서
               </span>
-            </p>
-          </div>
-        </div>
-        <div className="text-sm text-[#767676] space-y-1.5 pl-7">
-          {changes.slice(0, 4).map((item, idx) => (
-            <p key={idx} className="flex items-center gap-1">
-              <span className={item.direction === "up" ? "text-[#DC3545]" : "text-[#3182F6]"}>
-                {item.direction === "up" ? "↑" : "↓"}
+              <span className={`text-sm font-bold ${
+                item.direction === "up" ? "text-[#DC3545]" : "text-[#3182F6]"
+              }`}>
+                {item.change.toLocaleString()}원 {item.direction === "up" ? "더 썼어요" : "줄었어요"}
               </span>
-              {item.category}에서{" "}
-              <span className="text-[#191919] font-medium">
-                {item.change.toLocaleString()}원
-              </span>{" "}
-              {item.direction === "up" ? "더" : "적게"} 썼어요
-            </p>
+            </div>
           ))}
         </div>
         {totalSavings > 0 && (
-          <div className="pt-3 border-t border-[#E5E5E5] flex items-center justify-between">
+          <div className="mt-4 pt-3 border-t border-[#E5E5E5] flex items-center justify-between bg-[#F8F8F8] -mx-4 -mb-4 px-4 py-3 rounded-b-2xl">
             <p className="text-[#191919] text-sm">
-              오롯 혜택으로 총{" "}
-              <span className="font-bold text-[#191919]">
-                {totalSavings.toLocaleString()}원
-              </span>{" "}
-              절약
+              오롯 혜택으로{" "}
+              <span className="font-bold">{totalSavings.toLocaleString()}원</span> 절약
             </p>
             <span className="text-xl">🎉</span>
           </div>
@@ -367,51 +358,16 @@ export function ConsumptionReport({
       </motion.div>
 
       {/* Legend */}
-      <div className="flex justify-center gap-6 text-sm">
+      <div className="flex justify-center gap-8 text-sm">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-[#D4D4D4]" />
-          <span className="text-[#767676]">{previousPeriod}</span>
+          <span className="text-[#767676]">{previousPeriod} 소비</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-[#FEE500]" />
-          <span className="text-[#767676]">{currentPeriod}</span>
+          <span className="text-[#767676]">{currentPeriod} 소비</span>
         </div>
       </div>
-
-      {/* Changes List - 카테고리별 변화 */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="space-y-2"
-      >
-        <p className="text-sm text-[#767676] px-1 font-medium">카테고리별 소비 변화</p>
-        {changes.slice(0, 4).map((item, idx) => (
-          <div
-            key={idx}
-            className="flex items-center justify-between bg-white rounded-xl px-4 py-3 shadow-sm border border-[#E5E5E5]"
-          >
-            <span className="text-[#191919] text-sm font-medium">
-              {item.category}
-            </span>
-            <div
-              className={`flex items-center gap-1 ${
-                item.direction === "up" ? "text-[#DC3545]" : "text-[#3182F6]"
-              }`}
-            >
-              {item.direction === "up" ? (
-                <TrendingUp className="w-4 h-4" />
-              ) : (
-                <TrendingDown className="w-4 h-4" />
-              )}
-              <span className="text-sm font-semibold">
-                {item.direction === "up" ? "+" : "-"}
-                {item.change.toLocaleString()}원
-              </span>
-            </div>
-          </div>
-        ))}
-      </motion.div>
 
       {/* Rebuild Button - 원클릭 혜택 업데이트 */}
       <motion.div
