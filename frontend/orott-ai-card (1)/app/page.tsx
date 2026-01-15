@@ -73,6 +73,44 @@ export interface Benefit {
   color: string
 }
 
+// 시점 타입 정의
+export type TimePoint = "A" | "B" | "C"
+
+export const TIME_POINT_LABELS: Record<TimePoint, { label: string; period: string }> = {
+  A: { label: "시점 A", period: "2024년 1월" },
+  B: { label: "시점 B", period: "2024년 6월" },
+  C: { label: "시점 C", period: "2025년 1월" },
+}
+
+// 시점별 결제 데이터
+export const paymentsByTimePoint: Record<TimePoint, Payment[]> = {
+  // 시점 A: 직장인 일상 패턴 (카페, OTT, 교통 중심)
+  A: [
+    { merchant: "스타벅스 강남점", amount: "45,000원", date: "1/15", category: "카페" },
+    { merchant: "넷플릭스", amount: "17,000원", date: "1/1", category: "OTT" },
+    { merchant: "지하철 정기권", amount: "55,000원", date: "1/2", category: "교통" },
+    { merchant: "GS25", amount: "12,000원", date: "1/10", category: "편의점" },
+    { merchant: "CGV 영화", amount: "28,000원", date: "1/8", category: "영화관" },
+  ],
+  // 시점 B: 여행/여가 증가 패턴 (공항, 쇼핑 증가)
+  B: [
+    { merchant: "대한항공", amount: "350,000원", date: "6/15", category: "공항" },
+    { merchant: "무신사", amount: "120,000원", date: "6/10", category: "쇼핑" },
+    { merchant: "스타벅스", amount: "25,000원", date: "6/8", category: "카페" },
+    { merchant: "공항라운지", amount: "45,000원", date: "6/15", category: "공항" },
+    { merchant: "올리브영", amount: "65,000원", date: "6/5", category: "쇼핑" },
+  ],
+  // 시점 C: 육아/가정 중심 패턴 (마트, 배달 증가)
+  C: [
+    { merchant: "이마트", amount: "180,000원", date: "1/12", category: "마트" },
+    { merchant: "배달의민족", amount: "95,000원", date: "1/10", category: "배달" },
+    { merchant: "쿠팡 (기저귀)", amount: "75,000원", date: "1/8", category: "쇼핑" },
+    { merchant: "롯데마트", amount: "120,000원", date: "1/5", category: "마트" },
+    { merchant: "넷플릭스", amount: "17,000원", date: "1/1", category: "OTT" },
+  ],
+}
+
+// 기존 preset은 유지 (드롭다운용)
 export const paymentPresets: Record<string, PaymentPreset> = {
   travel: {
     label: "여행 패턴",
@@ -200,6 +238,16 @@ export default function Home() {
   const [reportData, setReportData] = useState<AnnualReportResponse | null>(null)
   const [isReportLoading, setIsReportLoading] = useState(false)
 
+  // 시점 상태 (A, B, C)
+  const [currentTimePoint, setCurrentTimePoint] = useState<TimePoint>("A")
+
+  // 현재 시점의 결제 데이터
+  const currentPayments = paymentsByTimePoint[currentTimePoint]
+
+  // 이전 시점의 결제 데이터 (리포트 비교용)
+  const previousTimePoint: TimePoint | null = currentTimePoint === "A" ? null : currentTimePoint === "B" ? "A" : "B"
+  const previousPayments = previousTimePoint ? paymentsByTimePoint[previousTimePoint] : null
+
   // Chat room ID - persisted in localStorage to maintain chat history across page reloads
   const [chatRoomId, setChatRoomId] = useState<string>("")
   const [isSending, setIsSending] = useState(false)
@@ -278,7 +326,7 @@ export default function Home() {
         user_id: TEST_USER_ID,
         chat_room_id: chatRoomId,
         analysis_period_months: 12,
-        payments: paymentPresets[selectedPaymentPreset].payments,
+        payments: currentPayments,
       })
 
       // Transform recommended benefits to frontend format
@@ -403,31 +451,11 @@ export default function Home() {
   }
 
   /**
-   * Load annual report data
+   * Show annual report - uses KakaoPay payment data
    */
-  const handleShowReport = async () => {
+  const handleShowReport = () => {
     setShowReport(true)
-    setIsReportLoading(true)
-
-    if (!isApiConfigured()) {
-      // Demo mode - report component will use mock data
-      setTimeout(() => {
-        setIsReportLoading(false)
-      }, 500)
-      return
-    }
-
-    try {
-      const report = await getAnnualReport({
-        user_id: TEST_USER_ID,
-      })
-      setReportData(report)
-    } catch (error) {
-      console.error("Failed to load report:", error)
-      toast.error("리포트를 불러오는데 실패했습니다")
-    } finally {
-      setIsReportLoading(false)
-    }
+    // Report will be generated from payments data in ConsumptionReport component
   }
 
   /**
@@ -553,6 +581,9 @@ export default function Home() {
           selectedPaymentPreset={selectedPaymentPreset}
           onPaymentPresetChange={setSelectedPaymentPreset}
           activeTab={activeSimulatorTab}
+          currentTimePoint={currentTimePoint}
+          onTimePointChange={setCurrentTimePoint}
+          payments={currentPayments}
         />
         <OrottService
           analysisState={analysisState}
@@ -562,7 +593,9 @@ export default function Home() {
           showReport={showReport}
           onCloseReport={() => setShowReport(false)}
           onRebuild={handleRebuild}
-          payments={paymentPresets[selectedPaymentPreset].payments}
+          payments={currentPayments}
+          previousPayments={previousPayments}
+          currentTimePoint={currentTimePoint}
           reportData={reportData}
           isReportLoading={isReportLoading}
         />

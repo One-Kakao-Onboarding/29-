@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Send, Trash2, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { paymentPresets, type ChatMessage } from "@/app/page"
+import { TIME_POINT_LABELS, type ChatMessage, type TimePoint, type Payment } from "@/app/page"
 
 interface ContextSimulatorProps {
   chatMessages: ChatMessage[]
@@ -16,6 +16,9 @@ interface ContextSimulatorProps {
   selectedPaymentPreset: string
   onPaymentPresetChange: (preset: string) => void
   activeTab: "kakaoTalk" | "kakaoPay"
+  currentTimePoint: TimePoint
+  onTimePointChange: (timePoint: TimePoint) => void
+  payments: Payment[]
 }
 
 /**
@@ -79,9 +82,11 @@ export function ContextSimulator({
   selectedPaymentPreset,
   onPaymentPresetChange,
   activeTab,
+  currentTimePoint,
+  onTimePointChange,
+  payments,
 }: ContextSimulatorProps) {
   const [inputValue, setInputValue] = useState("")
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [isSending, setIsSending] = useState(false)
   const [isComposing, setIsComposing] = useState(false)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -129,7 +134,7 @@ export function ContextSimulator({
     setInputValue(e.currentTarget.value)
   }
 
-  const currentPayments = paymentPresets[selectedPaymentPreset]
+  const timePoints: TimePoint[] = ["A", "B", "C"]
 
   return (
     <div className="w-[375px] h-[812px] bg-[#f5f5f5] flex flex-col rounded-[40px] shadow-2xl overflow-hidden border-8 border-gray-800 relative">
@@ -241,48 +246,38 @@ export function ContextSimulator({
               <p className="text-xs text-[#5c4c4c] text-center mt-1">결제 내역</p>
             </div>
 
-            {/* Dropdown for payment preset */}
+            {/* 시점 선택 버튼 */}
             <div className="px-4 py-3 border-b border-gray-100 bg-white flex-shrink-0">
-              <div className="relative">
-                <button
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="w-full flex items-center justify-between px-4 py-2 bg-gray-50 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100"
-                >
-                  <span>{currentPayments.label}</span>
-                  <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
-                </button>
-
-                {isDropdownOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 overflow-hidden"
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-gray-500">시점 선택</span>
+                <span className="text-xs text-gray-400">{TIME_POINT_LABELS[currentTimePoint].period}</span>
+              </div>
+              <div className="flex gap-2">
+                {timePoints.map((point) => (
+                  <button
+                    key={point}
+                    onClick={() => onTimePointChange(point)}
+                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+                      currentTimePoint === point
+                        ? "bg-[#fee500] text-[#3c1e1e] shadow-sm"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
                   >
-                    {Object.entries(paymentPresets).map(([key, value]) => (
-                      <button
-                        key={key}
-                        onClick={() => {
-                          onPaymentPresetChange(key)
-                          setIsDropdownOpen(false)
-                        }}
-                        className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-50 ${
-                          selectedPaymentPreset === key ? "bg-[#fee500]/20 text-[#3c1e1e] font-medium" : "text-gray-700"
-                        }`}
-                      >
-                        {value.label}
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
+                    <div className="text-center">
+                      <span className="block font-bold">{point}</span>
+                      <span className="block text-[10px] opacity-70">{TIME_POINT_LABELS[point].period}</span>
+                    </div>
+                  </button>
+                ))}
               </div>
             </div>
 
             {/* Payment List */}
             <div className="flex-1 p-4 overflow-y-auto bg-white">
               <div className="space-y-2">
-                {currentPayments.payments.map((payment, idx) => (
+                {payments.map((payment, idx) => (
                   <motion.div
-                    key={idx}
+                    key={`${currentTimePoint}-${idx}`}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.1 }}
@@ -290,7 +285,7 @@ export function ContextSimulator({
                   >
                     <div>
                       <p className="text-sm font-medium text-gray-800">{payment.merchant}</p>
-                      <p className="text-xs text-gray-500">{payment.date}</p>
+                      <p className="text-xs text-gray-500">{payment.date} · {payment.category}</p>
                     </div>
                     <p className="text-sm font-semibold text-[#3c1e1e]">{payment.amount}</p>
                   </motion.div>

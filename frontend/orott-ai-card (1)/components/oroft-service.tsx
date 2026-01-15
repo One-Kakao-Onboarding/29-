@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Sparkles, RefreshCw } from "lucide-react"
 import { BenefitCard } from "@/components/benefit-card"
 import { ConsumptionReport } from "@/components/consumption-report"
-import type { AnalysisState, Benefit, Payment } from "@/app/page"
+import type { AnalysisState, Benefit, Payment, TimePoint } from "@/app/page"
 import type { AnnualReportResponse } from "@/services/types"
 
 const Card3D = dynamic(() => import("@/components/card-3d").then((mod) => ({ default: mod.Card3D })), {
@@ -26,6 +26,8 @@ interface OrottServiceProps {
   onCloseReport: () => void
   onRebuild: () => void
   payments: Payment[]
+  previousPayments?: Payment[] | null
+  currentTimePoint: TimePoint
   reportData?: AnnualReportResponse | null
   isReportLoading?: boolean
 }
@@ -39,6 +41,8 @@ export function OrottService({
   onCloseReport,
   onRebuild,
   payments,
+  previousPayments,
+  currentTimePoint,
   reportData,
   isReportLoading,
 }: OrottServiceProps) {
@@ -157,6 +161,9 @@ export function OrottService({
               onRebuild={onRebuild}
               reportData={reportData}
               isLoading={isReportLoading}
+              payments={payments}
+              previousPayments={previousPayments}
+              currentTimePoint={currentTimePoint}
             />
           )}
         </AnimatePresence>

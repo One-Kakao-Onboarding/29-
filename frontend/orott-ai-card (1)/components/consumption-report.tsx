@@ -6,15 +6,119 @@ import { X, RefreshCw, TrendingUp, TrendingDown, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } from "recharts"
 import type { AnnualReportResponse } from "@/services/types"
+import type { Payment, TimePoint } from "@/app/page"
+import { TIME_POINT_LABELS } from "@/app/page"
 
 interface ConsumptionReportProps {
   onClose: () => void
   onRebuild: () => void
   reportData?: AnnualReportResponse | null
   isLoading?: boolean
+  payments?: Payment[]
+  previousPayments?: Payment[] | null
+  currentTimePoint?: TimePoint
 }
 
-// Mock data for demo mode
+// Consumer type mapping
+const typeMap: Record<string, { code: string; name: string; description: string }> = {
+  마트: { code: "HOME", name: "홈라이프 소비자", description: "집에서 보내는 시간이 늘어난 실속파 소비 패턴" },
+  배달: { code: "FAST", name: "효율형 소비자", description: "시간을 아끼는 스마트한 소비 패턴" },
+  카페: { code: "CAFE", name: "커피러버 소비자", description: "일상에서 작은 여유를 즐기는 소비 패턴" },
+  쇼핑: { code: "SHOP", name: "트렌드 소비자", description: "패션과 라이프스타일에 관심 많은 소비 패턴" },
+  OTT: { code: "PLAY", name: "엔터테이너 소비자", description: "콘텐츠와 여가를 즐기는 소비 패턴" },
+  공항: { code: "TRIP", name: "여행러 소비자", description: "새로운 경험을 추구하는 활동적인 소비 패턴" },
+  교통: { code: "MOVE", name: "액티브 소비자", description: "이동이 많고 활동적인 라이프스타일" },
+  편의점: { code: "CONV", name: "편의형 소비자", description: "간편하고 빠른 것을 선호하는 소비 패턴" },
+  주유: { code: "DRIV", name: "드라이버 소비자", description: "자동차 중심의 생활을 하는 소비 패턴" },
+  영화관: { code: "CINE", name: "시네필 소비자", description: "문화생활을 즐기는 소비 패턴" },
+}
+
+/**
+ * Calculate category totals from payments
+ */
+function calculateCategoryTotals(payments: Payment[]) {
+  const categoryTotals: Record<string, number> = {}
+  let totalAmount = 0
+
+  for (const payment of payments) {
+    const amount = parseInt(payment.amount.replace(/[^0-9]/g, ''), 10) || 0
+    totalAmount += amount
+    categoryTotals[payment.category] = (categoryTotals[payment.category] || 0) + amount
+  }
+
+  return { categoryTotals, totalAmount }
+}
+
+/**
+ * Generate report data from KakaoPay payments with comparison to previous period
+ */
+function generateReportFromPayments(
+  currentPayments: Payment[],
+  previousPayments?: Payment[] | null
+) {
+  // Calculate current period
+  const { categoryTotals: currentTotals, totalAmount: currentTotal } = calculateCategoryTotals(currentPayments)
+
+  // Calculate previous period (if available)
+  const { categoryTotals: previousTotals, totalAmount: previousTotal } = previousPayments
+    ? calculateCategoryTotals(previousPayments)
+    : { categoryTotals: {}, totalAmount: 0 }
+
+  // Get all categories from both periods
+  const allCategories = new Set([
+    ...Object.keys(currentTotals),
+    ...Object.keys(previousTotals),
+  ])
+
+  // Sort categories by current amount
+  const sortedCategories = Array.from(allCategories)
+    .map((category) => ({
+      category,
+      currentAmount: currentTotals[category] || 0,
+      previousAmount: previousTotals[category] || 0,
+      currentPercentage: currentTotal > 0 ? Math.round(((currentTotals[category] || 0) / currentTotal) * 100) : 0,
+      previousPercentage: previousTotal > 0 ? Math.round(((previousTotals[category] || 0) / previousTotal) * 100) : 0,
+    }))
+    .sort((a, b) => b.currentAmount - a.currentAmount)
+
+  // Generate radar data comparing current vs previous
+  const radarData = sortedCategories.map(({ category, currentPercentage, previousPercentage }) => ({
+    category,
+    old: previousPayments ? previousPercentage : Math.max(10, Math.floor(Math.random() * 30) + 10),
+    new: currentPercentage,
+  }))
+
+  // Generate changes comparing current vs previous
+  const changes = sortedCategories
+    .map(({ category, currentAmount, previousAmount }) => {
+      const change = currentAmount - previousAmount
+      return {
+        category,
+        change: Math.abs(change),
+        direction: change >= 0 ? ("up" as const) : ("down" as const),
+        rawChange: change,
+      }
+    })
+    .filter((c) => c.change > 0)
+    .sort((a, b) => Math.abs(b.rawChange) - Math.abs(a.rawChange))
+    .slice(0, 4)
+
+  // Determine consumer type from top category
+  const topCategory = sortedCategories[0]?.category || "카페"
+  const type = typeMap[topCategory] || typeMap["카페"]
+
+  // Calculate estimated savings (10% of total)
+  const totalSavings = Math.round(currentTotal * 0.1)
+
+  return {
+    radarData,
+    changes,
+    type,
+    totalSavings,
+  }
+}
+
+// Fallback mock data for demo mode (when no payments provided)
 const mockReportData = {
   radarData: [
     { category: "마트", old: 25, new: 65 },
@@ -108,14 +212,26 @@ export function ConsumptionReport({
   onRebuild,
   reportData,
   isLoading,
+  payments,
+  previousPayments,
+  currentTimePoint,
 }: ConsumptionReportProps) {
-  // Transform API data or use mock data
+  // Transform API data, generate from payments, or use mock data
   const { radarData, changes, type, totalSavings } = useMemo(() => {
     if (reportData) {
       return transformApiData(reportData)
     }
+    // Use KakaoPay payments data if available
+    if (payments && payments.length > 0) {
+      return generateReportFromPayments(payments, previousPayments)
+    }
     return mockReportData
-  }, [reportData])
+  }, [reportData, payments, previousPayments])
+
+  // Get time point labels for display
+  const currentPeriod = currentTimePoint ? TIME_POINT_LABELS[currentTimePoint].period : "현재"
+  const previousTimePoint: TimePoint | null = currentTimePoint === "A" ? null : currentTimePoint === "B" ? "A" : "B"
+  const previousPeriod = previousTimePoint ? TIME_POINT_LABELS[previousTimePoint].period : "이전"
 
   // Loading state
   if (isLoading) {
@@ -168,7 +284,7 @@ export function ConsumptionReport({
         className="bg-white/5 border border-white/10 rounded-xl p-3 space-y-2"
       >
         <p className="text-gray-300 text-sm leading-relaxed">
-          홍길동님, 1년 전과 비교해봤어요.
+          홍길동님, {previousPeriod}과 비교해봤어요.
           <br />
           <span className="text-white font-medium">라이프스타일이 완전히 바뀌었네요!</span>
         </p>
@@ -199,8 +315,8 @@ export function ConsumptionReport({
           <RadarChart data={radarData}>
             <PolarGrid stroke="#ffffff15" />
             <PolarAngleAxis dataKey="category" tick={{ fill: "#9ca3af", fontSize: 9 }} />
-            <Radar name="1년 전" dataKey="old" stroke="#6b7280" fill="#6b7280" fillOpacity={0.2} strokeWidth={2} />
-            <Radar name="현재" dataKey="new" stroke="#ffffff" fill="#ffffff" fillOpacity={0.2} strokeWidth={2} />
+            <Radar name={previousPeriod} dataKey="old" stroke="#6b7280" fill="#6b7280" fillOpacity={0.2} strokeWidth={2} />
+            <Radar name={currentPeriod} dataKey="new" stroke="#ffffff" fill="#ffffff" fillOpacity={0.2} strokeWidth={2} />
           </RadarChart>
         </ResponsiveContainer>
       </motion.div>
@@ -209,11 +325,11 @@ export function ConsumptionReport({
       <div className="flex justify-center gap-6 text-xs">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-gray-500" />
-          <span className="text-gray-400">1년 전</span>
+          <span className="text-gray-400">{previousPeriod}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-white" />
-          <span className="text-gray-400">현재</span>
+          <span className="text-gray-400">{currentPeriod}</span>
         </div>
       </div>
 
