@@ -57,6 +57,11 @@ export interface Payment {
   category: string
 }
 
+export interface PaymentPreset {
+  label: string
+  payments: Payment[]
+}
+
 export interface Benefit {
   id: string
   title: string
@@ -68,31 +73,43 @@ export interface Benefit {
   color: string
 }
 
-export const paymentPresets: Record<string, Payment[]> = {
-  travel: [
-    { merchant: "대한항공", amount: "350,000원", date: "3/10", category: "공항" },
-    { merchant: "지하철", amount: "2,800원", date: "3/8", category: "교통" },
-    { merchant: "스타벅스 공항점", amount: "6,500원", date: "3/7", category: "카페" },
-    { merchant: "공항라운지", amount: "45,000원", date: "3/7", category: "공항" },
-  ],
-  parenting: [
-    { merchant: "이마트", amount: "85,000원", date: "3/10", category: "마트" },
-    { merchant: "롯데마트", amount: "45,000원", date: "3/8", category: "마트" },
-    { merchant: "무신사", amount: "78,000원", date: "3/5", category: "쇼핑" },
-    { merchant: "배달의민족", amount: "32,000원", date: "3/3", category: "배달" },
-  ],
-  daily: [
-    { merchant: "스타벅스 강남점", amount: "6,500원", date: "3/12", category: "카페" },
-    { merchant: "넷플릭스", amount: "17,000원", date: "3/1", category: "OTT" },
-    { merchant: "배달의민족", amount: "25,000원", date: "2/28", category: "배달" },
-    { merchant: "GS25", amount: "8,200원", date: "2/27", category: "편의점" },
-  ],
-  shopping: [
-    { merchant: "무신사", amount: "89,000원", date: "3/11", category: "쇼핑" },
-    { merchant: "29cm", amount: "65,000원", date: "3/9", category: "쇼핑" },
-    { merchant: "지그재그", amount: "47,000원", date: "3/6", category: "쇼핑" },
-    { merchant: "CGV", amount: "28,000원", date: "3/2", category: "영화관" },
-  ],
+export const paymentPresets: Record<string, PaymentPreset> = {
+  travel: {
+    label: "여행 패턴",
+    payments: [
+      { merchant: "야놀자", amount: "89,000원", date: "3/10", category: "쇼핑" },
+      { merchant: "KTX 예매", amount: "52,800원", date: "3/8", category: "교통" },
+      { merchant: "해운대 횟집", amount: "45,000원", date: "3/7", category: "배달" },
+      { merchant: "스타벅스 부산점", amount: "6,500원", date: "3/7", category: "카페" },
+    ],
+  },
+  parenting: {
+    label: "육아 패턴",
+    payments: [
+      { merchant: "쿠팡 (기저귀)", amount: "45,000원", date: "3/10", category: "쇼핑" },
+      { merchant: "소아과의원", amount: "5,000원", date: "3/8", category: "쇼핑" },
+      { merchant: "베이비몰", amount: "78,000원", date: "3/5", category: "쇼핑" },
+      { merchant: "마트 (분유)", amount: "32,000원", date: "3/3", category: "마트" },
+    ],
+  },
+  daily: {
+    label: "일상 패턴",
+    payments: [
+      { merchant: "스타벅스 강남점", amount: "6,500원", date: "3/12", category: "카페" },
+      { merchant: "넷플릭스", amount: "17,000원", date: "3/1", category: "OTT" },
+      { merchant: "배달의민족", amount: "25,000원", date: "2/28", category: "배달" },
+      { merchant: "GS25", amount: "8,200원", date: "2/27", category: "편의점" },
+    ],
+  },
+  shopping: {
+    label: "쇼핑 패턴",
+    payments: [
+      { merchant: "무신사", amount: "89,000원", date: "3/11", category: "쇼핑" },
+      { merchant: "올리브영", amount: "35,000원", date: "3/9", category: "쇼핑" },
+      { merchant: "쿠팡", amount: "67,000원", date: "3/6", category: "쇼핑" },
+      { merchant: "애플스토어", amount: "190,000원", date: "3/2", category: "쇼핑" },
+    ],
+  },
 }
 
 // Fallback benefits for demo mode (when API is not configured)
@@ -261,6 +278,7 @@ export default function Home() {
         user_id: TEST_USER_ID,
         chat_room_id: chatRoomId,
         analysis_period_months: 12,
+        payments: paymentPresets[selectedPaymentPreset].payments,
       })
 
       // Transform recommended benefits to frontend format
@@ -544,7 +562,7 @@ export default function Home() {
           showReport={showReport}
           onCloseReport={() => setShowReport(false)}
           onRebuild={handleRebuild}
-          payments={paymentPresets[selectedPaymentPreset]}
+          payments={paymentPresets[selectedPaymentPreset].payments}
           reportData={reportData}
           isReportLoading={isReportLoading}
         />

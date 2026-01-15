@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Send, Trash2, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import type { ChatMessage } from "@/app/page"
+import { paymentPresets, type ChatMessage } from "@/app/page"
 
 interface ContextSimulatorProps {
   chatMessages: ChatMessage[]
@@ -71,47 +71,6 @@ interface ContextSimulatorProps {
  * ============================================================
  */
 
-const paymentPresets: Record<
-  string,
-  { label: string; payments: { merchant: string; amount: string; date: string }[] }
-> = {
-  travel: {
-    label: "여행 패턴",
-    payments: [
-      { merchant: "야놀자", amount: "89,000원", date: "3/10" },
-      { merchant: "KTX 예매", amount: "52,800원", date: "3/8" },
-      { merchant: "해운대 횟집", amount: "45,000원", date: "3/7" },
-      { merchant: "스타벅스 부산점", amount: "6,500원", date: "3/7" },
-    ],
-  },
-  parenting: {
-    label: "육아 패턴",
-    payments: [
-      { merchant: "쿠팡 (기저귀)", amount: "45,000원", date: "3/10" },
-      { merchant: "소아과의원", amount: "5,000원", date: "3/8" },
-      { merchant: "베이비몰", amount: "78,000원", date: "3/5" },
-      { merchant: "마트 (분유)", amount: "32,000원", date: "3/3" },
-    ],
-  },
-  daily: {
-    label: "일상 패턴",
-    payments: [
-      { merchant: "스타벅스 강남점", amount: "6,500원", date: "3/12" },
-      { merchant: "넷플릭스", amount: "17,000원", date: "3/1" },
-      { merchant: "배달의민족", amount: "25,000원", date: "2/28" },
-      { merchant: "GS25", amount: "8,200원", date: "2/27" },
-    ],
-  },
-  shopping: {
-    label: "쇼핑 패턴",
-    payments: [
-      { merchant: "무신사", amount: "89,000원", date: "3/11" },
-      { merchant: "올리브영", amount: "35,000원", date: "3/9" },
-      { merchant: "쿠팡", amount: "67,000원", date: "3/6" },
-      { merchant: "애플스토어", amount: "190,000원", date: "3/2" },
-    ],
-  },
-}
 
 export function ContextSimulator({
   chatMessages,

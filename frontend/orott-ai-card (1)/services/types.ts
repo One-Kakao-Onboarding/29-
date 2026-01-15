@@ -7,10 +7,18 @@
 // Request Types
 // ============================================================================
 
+export interface PaymentData {
+  merchant: string;
+  amount: string;
+  date: string;
+  category: string;
+}
+
 export interface AnalyzeRequest {
   user_id: string;
   chat_room_id?: string;
   analysis_period_months?: number;
+  payments?: PaymentData[];
 }
 
 export interface ConfirmBenefitsRequest {

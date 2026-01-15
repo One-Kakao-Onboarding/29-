@@ -174,6 +174,47 @@ export async function getUser(supabase: SupabaseClient, userId: string) {
   return data;
 }
 
+// 프론트엔드 결제 데이터 변환
+export function convertFrontendPayments(
+  payments: Array<{
+    merchant: string;
+    amount: string;
+    date: string;
+    category: string;
+  }>
+): Array<{
+  category: string;
+  amount: number;
+  percentage: number;
+  transaction_count: number;
+}> {
+  const categoryTotals: Record<string, { amount: number; count: number }> = {};
+  let totalAmount = 0;
+
+  for (const payment of payments) {
+    // Parse amount string "350,000원" -> 350000
+    const amount = parseInt(payment.amount.replace(/[^0-9]/g, ''), 10) || 0;
+    totalAmount += amount;
+
+    if (!categoryTotals[payment.category]) {
+      categoryTotals[payment.category] = { amount: 0, count: 0 };
+    }
+    categoryTotals[payment.category].amount += amount;
+    categoryTotals[payment.category].count += 1;
+  }
+
+  return Object.entries(categoryTotals)
+    .map(([category, data]) => ({
+      category,
+      amount: data.amount,
+      percentage: totalAmount > 0
+        ? Math.round((data.amount / totalAmount) * 1000) / 10
+        : 0,
+      transaction_count: data.count,
+    }))
+    .sort((a, b) => b.amount - a.amount);
+}
+
 // 채팅 메시지 저장
 export async function saveChatMessage(
   supabase: SupabaseClient,

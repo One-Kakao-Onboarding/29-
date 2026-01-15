@@ -8,6 +8,7 @@ import {
   getUserBenefits,
   getBenefitOptions,
   getUser,
+  convertFrontendPayments,
 } from "../_shared/supabase.ts";
 import { analyzeAndRecommend } from "../_shared/claude.ts";
 
@@ -18,7 +19,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { user_id, chat_room_id, analysis_period_months = 12 } = await req.json();
+    const { user_id, chat_room_id, analysis_period_months = 12, payments } = await req.json();
 
     if (!user_id) {
       return new Response(
@@ -32,12 +33,19 @@ Deno.serve(async (req) => {
     // 1. 사용자 확인
     const user = await getUser(supabase, user_id);
 
-    // 2. 결제 내역 요약
-    const paymentSummary = await getPaymentSummaryByCategory(
-      supabase,
-      user_id,
-      analysis_period_months
-    );
+    // 2. 결제 내역 요약 (프론트엔드 데이터 우선, 없으면 DB 조회)
+    let paymentSummary;
+    if (payments && Array.isArray(payments) && payments.length > 0) {
+      // 프론트엔드에서 전달받은 결제 데이터 사용
+      paymentSummary = convertFrontendPayments(payments);
+    } else {
+      // DB에서 조회
+      paymentSummary = await getPaymentSummaryByCategory(
+        supabase,
+        user_id,
+        analysis_period_months
+      );
+    }
 
     // 3. 채팅 로그 조회
     const chatLogs = await getChatLogs(supabase, user_id, chat_room_id);
