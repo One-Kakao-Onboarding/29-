@@ -4,11 +4,6 @@ import type { Metadata } from "next"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 
-import { Geist_Mono, Geist_Mono as V0_Font_Geist_Mono } from 'next/font/google'
-
-// Initialize fonts
-const _geistMono = V0_Font_Geist_Mono({ subsets: ['latin'], weight: ["100","200","300","400","500","600","700","800","900"] })
-
 export const metadata: Metadata = {
   title: "Orott - AI 맞춤 카드",
   description: "채팅과 결제 패턴을 분석하여 맞춤 혜택을 추천하는 AI 카드",
@@ -38,8 +33,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={`font-sans antialiased`}>
+    <html lang="ko">
+      <body className="antialiased">
         {children}
         <Analytics />
       </body>

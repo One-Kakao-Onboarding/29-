@@ -3,45 +3,128 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Pretendard 폰트 */
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Thin.woff2') format('woff2');
+    font-weight: 100;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-ExtraLight.woff2') format('woff2');
+    font-weight: 200;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Light.woff2') format('woff2');
+    font-weight: 300;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-SemiBold.woff2') format('woff2');
+    font-weight: 600;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-ExtraBold.woff2') format('woff2');
+    font-weight: 800;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Black.woff2') format('woff2');
+    font-weight: 900;
+    font-display: swap;
+}
+
+/* 카카오 디자인 시스템 컬러 */
 :root {
-  --background: #ffffff;
-  --foreground: #0a0a0a;
+  /* 카카오 브랜드 컬러 */
+  --kakao-yellow: #FEE500;
+  --kakao-yellow-hover: #FAE100;
+  --kakao-brown: #3C1E1E;
+
+  /* 중립 그레이 스케일 */
+  --gray-50: #F9F9F9;
+  --gray-100: #F7F7F7;
+  --gray-200: #E5E5E5;
+  --gray-300: #D4D4D4;
+  --gray-400: #999999;
+  --gray-500: #767676;
+  --gray-600: #555555;
+  --gray-700: #333333;
+  --gray-800: #191919;
+  --gray-900: #000000;
+
+  /* 시스템 컬러 */
+  --background: #F7F7F7;
+  --foreground: #191919;
   --card: #ffffff;
-  --card-foreground: #0a0a0a;
+  --card-foreground: #191919;
   --popover: #ffffff;
-  --popover-foreground: #0a0a0a;
-  --primary: #737373;
-  --primary-foreground: #fafafa;
-  --secondary: #f5f5f5;
-  --secondary-foreground: #171717;
-  --muted: #f5f5f5;
-  --muted-foreground: #717171;
-  --accent: #f5f5f5;
-  --accent-foreground: #171717;
-  --destructive: #e7000b;
-  --destructive-foreground: #f5f5f5;
-  --border: #e5e5e5;
-  --input: #e5e5e5;
-  --ring: #a1a1a1;
-  --chart-1: #737373;
-  --chart-2: #737373;
-  --chart-3: #737373;
-  --chart-4: #737373;
-  --chart-5: #737373;
-  --radius: 0rem;
-  --sidebar: #fafafa;
-  --sidebar-foreground: #0a0a0a;
-  --sidebar-primary: #171717;
-  --sidebar-primary-foreground: #fafafa;
-  --sidebar-accent: #f5f5f5;
-  --sidebar-accent-foreground: #171717;
-  --sidebar-border: #e5e5e5;
-  --sidebar-ring: #a1a1a1;
+  --popover-foreground: #191919;
+  --primary: #FEE500;
+  --primary-foreground: #191919;
+  --secondary: #F7F7F7;
+  --secondary-foreground: #191919;
+  --muted: #F7F7F7;
+  --muted-foreground: #767676;
+  --accent: #FEE500;
+  --accent-foreground: #191919;
+  --destructive: #DC3545;
+  --destructive-foreground: #ffffff;
+  --border: #E5E5E5;
+  --input: #E5E5E5;
+  --ring: #FEE500;
+  --chart-1: #FEE500;
+  --chart-2: #3182F6;
+  --chart-3: #00C4B4;
+  --chart-4: #FF6B6B;
+  --chart-5: #A855F7;
+  --radius: 0.75rem;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #191919;
+  --sidebar-primary: #FEE500;
+  --sidebar-primary-foreground: #191919;
+  --sidebar-accent: #F7F7F7;
+  --sidebar-accent-foreground: #191919;
+  --sidebar-border: #E5E5E5;
+  --sidebar-ring: #FEE500;
   --shadow-x: 0px;
-  --shadow-y: 1px;
-  --shadow-blur: 2px;
+  --shadow-y: 2px;
+  --shadow-blur: 8px;
   --shadow-spread: 0px;
-  --shadow-opacity: 0.05;
+  --shadow-opacity: 0.08;
   --shadow-color: #000000;
 }
 
@@ -87,8 +170,8 @@
 }
 
 @theme inline {
-  --font-sans: 'Geist Mono', 'Geist Mono Fallback';
-  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
+  --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -125,7 +208,7 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --font-serif: 'Geist Mono', 'Geist Mono Fallback';
+  --font-serif: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   /* computed shadow variables below - do not modify */
   --shadow-2xs: var(--shadow-x) var(--shadow-y) color-mix(in srgb, var(--shadow-color) calc(var(--shadow-opacity) * 100%), transparent);
   --shadow-xs: var(--shadow-x) var(--shadow-y) var(--shadow-blur) var(--shadow-spread) color-mix(in srgb, var(--shadow-color) calc(var(--shadow-opacity) * 100%), transparent);
@@ -149,5 +232,6 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   }
 }

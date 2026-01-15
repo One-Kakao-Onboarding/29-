@@ -1,226 +1,305 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState, useRef, useMemo, useCallback } from "react"
-import type { Benefit } from "@/app/page"
+import type React from "react";
+import { useState, useRef, useMemo, useCallback, useEffect } from "react";
+import type { Benefit } from "@/app/page";
 
 /**
  * ============================================================================
  * 혜택별 카드 색상 시스템 - 원장 데이터 (Master Data)
  * ============================================================================
- *
- * [절대 불변] 이 카테고리와 색상 매핑은 원장 데이터입니다.
- * 임의로 추가/수정/삭제하지 마세요. 변경이 필요하면 기획팀과 협의하세요.
- *
- * ┌─────────────┬───────────────┬─────────────────────────────────────────────┐
- * │ 카테고리    │ 색상 (HEX)    │ 해당 브랜드/서비스 (원장)                   │
- * ├─────────────┼───────────────┼─────────────────────────────────────────────┤
- * │ 카페        │ #22c55e 초록  │ 스타벅스, 할리스, 투썸                      │
- * │ 영화관      │ #f97316 주황  │ CGV, 메가박스, 롯데시네마                   │
- * │ 배달        │ #eab308 노랑  │ 배달의민족, 쿠팡잇츠                        │
- * │ OTT         │ #ef4444 빨강  │ 넷플릭스, 디즈니+, 티빙, 웨이브             │
- * │ 교통        │ #3b82f6 파랑  │ 시내버스, 시외버스, 지하철                  │
- * │ 편의점      │ #a855f7 보라  │ CU, GS25, 세븐일레븐, emart everyday        │
- * │ 주유        │ #84cc16 연두  │ S-oil, 현대오일뱅크, SK                     │
- * │ 쇼핑        │ #ec4899 핑크  │ 무신사, 지그재그, 8-seconds, W컨셉, 29cm    │
- * │ 공항        │ #06b6d4 하늘  │ 공항라운지, 대한항공, 아시아나, 진에어      │
- * │ 마트        │ #a16207 갈색  │ 이마트, 롯데마트                            │
- * └─────────────┴───────────────┴─────────────────────────────────────────────┘
- *
- * [주의사항]
- * 1. 위 10개 카테고리가 전부입니다. 이 외의 카테고리는 존재하지 않습니다.
- * 2. AI가 혜택을 추천할 때 반드시 위 카테고리 중 하나를 사용해야 합니다.
- * 3. 브랜드는 반드시 해당 카테고리 안에서만 선택되어야 합니다.
- * 4. 새로운 브랜드가 추가되면 기존 카테고리에 매핑해야 합니다.
- *
- * ============================================================================
- * TODO: AI 연동 작업
- * ============================================================================
- *
- * AI 프롬프트에 반드시 포함할 내용:
- * - 카테고리는 위 10개로 제한
- * - 각 카테고리별 브랜드 목록 명시
- * - category 필드 값은 한글로 정확히 (OTT는 영어 허용)
- *
- * ============================================================================
  */
 
-// [원장 데이터] 절대 임의 수정 금지!
-// 이 10개 카테고리가 전부이며, 추가 카테고리는 없습니다.
 const CATEGORY_COLORS: Record<string, string> = {
-  카페: "#22c55e", // 초록 - 스타벅스, 할리스, 투썸
-  영화관: "#f97316", // 주황 - CGV, 메가박스, 롯데시네마
-  배달: "#eab308", // 노랑 - 배달의민족, 쿠팡잇츠
-  OTT: "#ef4444", // 빨강 - 넷플릭스, 디즈니+, 티빙, 웨이브
-  교통: "#3b82f6", // 파랑 - 시내버스, 시외버스, 지하철
-  편의점: "#a855f7", // 보라 - CU, GS25, 세븐일레븐, emart everyday
-  주유: "#84cc16", // 연두 - S-oil, 현대오일뱅크, SK
-  쇼핑: "#ec4899", // 핑크 - 무신사, 지그재그, 8-seconds, W컨셉, 29cm
-  공항: "#06b6d4", // 하늘 - 공항라운지, 대한항공, 아시아나, 진에어
-  마트: "#a16207", // 갈색 - 이마트, 롯데마트
-}
+  카페: "#22c55e",
+  영화관: "#f97316",
+  배달: "#eab308",
+  OTT: "#ef4444",
+  교통: "#3b82f6",
+  편의점: "#a855f7",
+  주유: "#84cc16",
+  쇼핑: "#ec4899",
+  공항: "#06b6d4",
+  마트: "#a16207",
+};
 
-// 브랜드 → 카테고리 매핑 (원장 데이터 기반)
-// AI 연동 전 fallback용, 브랜드명으로 카테고리 추론
 const BRAND_TO_CATEGORY: Record<string, string> = {
-  // 카페
   스타벅스: "카페",
   할리스: "카페",
   투썸: "카페",
-  // 영화관
   cgv: "영화관",
   메가박스: "영화관",
   롯데시네마: "영화관",
-  // 배달
   배달의민족: "배달",
   쿠팡잇츠: "배달",
-  // OTT
   넷플릭스: "OTT",
   넷플: "OTT",
   디즈니: "OTT",
   티빙: "OTT",
   웨이브: "OTT",
-  // 교통
   시내버스: "교통",
   시외버스: "교통",
   지하철: "교통",
-  // 편의점
   cu: "편의점",
   gs25: "편의점",
   세븐일레븐: "편의점",
   "emart everyday": "편의점",
-  // 주유
   "s-oil": "주유",
   현대오일뱅크: "주유",
   sk: "주유",
-  // 쇼핑
   무신사: "쇼핑",
   지그재그: "쇼핑",
   "8-seconds": "쇼핑",
   w컨셉: "쇼핑",
   "29cm": "쇼핑",
-  // 공항
   공항라운지: "공항",
   대한항공: "공항",
   아시아나: "공항",
   진에어: "공항",
-  // 마트
   이마트: "마트",
   롯데마트: "마트",
-}
+};
 
 function getBenefitColors(benefits: Benefit[]): string[] {
-  const colors: string[] = []
+  const colors: string[] = [];
 
   for (const benefit of benefits) {
-    // 1순위: category 필드가 CATEGORY_COLORS에 있으면 사용
     if (benefit.category && CATEGORY_COLORS[benefit.category]) {
-      colors.push(CATEGORY_COLORS[benefit.category])
-      continue
+      colors.push(CATEGORY_COLORS[benefit.category]);
+      continue;
     }
 
-    // 2순위: title에서 브랜드명으로 카테고리 추론
-    const title = benefit.title.toLowerCase()
-    let found = false
+    const title = benefit.title.toLowerCase();
+    let found = false;
     for (const [brand, category] of Object.entries(BRAND_TO_CATEGORY)) {
       if (title.includes(brand.toLowerCase())) {
-        colors.push(CATEGORY_COLORS[category])
-        found = true
-        break
+        colors.push(CATEGORY_COLORS[category]);
+        found = true;
+        break;
       }
     }
 
-    // 매칭 실패 시 기본 색상 사용 안함 (그라데이션에서 제외)
     if (!found) {
-      console.warn(`[Card3D] 카테고리 매핑 실패: ${benefit.title} (category: ${benefit.category})`)
+      console.warn(
+        `[Card3D] 카테고리 매핑 실패: ${benefit.title} (category: ${benefit.category})`
+      );
     }
   }
 
-  return colors
+  return colors;
 }
 
 function generateGradientFromColors(colors: string[]): string {
   if (colors.length === 0) {
-    // 기본 그라데이션 (혜택이 없을 때)
-    return "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)"
+    return "linear-gradient(135deg, #191919 0%, #333333 50%, #191919 100%)";
   }
 
   if (colors.length === 1) {
-    // 단일 색상: 해당 색상의 밝은/어두운 버전으로 그라데이션
-    return `linear-gradient(135deg, ${colors[0]} 0%, ${adjustColor(colors[0], 30)} 50%, ${adjustColor(colors[0], -20)} 100%)`
+    // 단일 색상 - 전체를 채우면서 깊이감
+    return `
+      radial-gradient(ellipse 120% 120% at 20% 20%, ${colors[0]} 0%, ${adjustColor(colors[0], -10)} 50%, ${adjustColor(colors[0], -25)} 100%)
+    `;
   }
 
   if (colors.length === 2) {
-    return `linear-gradient(135deg, ${colors[0]} 0%, ${adjustColor(colors[0], 20)} 30%, ${adjustColor(colors[1], 20)} 70%, ${colors[1]} 100%)`
+    // 두 색상 - 대각선으로 영역 분할, 중앙에서 부드럽게 만남
+    return `
+      radial-gradient(ellipse 140% 140% at 0% 0%, ${colors[0]} 0%, ${colors[0]}90 30%, transparent 60%),
+      radial-gradient(ellipse 140% 140% at 100% 100%, ${colors[1]} 0%, ${colors[1]}90 30%, transparent 60%),
+      linear-gradient(135deg, ${colors[0]}80 0%, ${colors[1]}80 100%)
+    `;
   }
 
   if (colors.length === 3) {
-    return `linear-gradient(135deg, ${colors[0]} 0%, ${colors[1]} 50%, ${colors[2]} 100%)`
+    // 세 색상 - 삼각형 형태, 중앙까지 확장
+    return `
+      radial-gradient(ellipse 130% 130% at 0% 0%, ${colors[0]} 0%, ${colors[0]}80 25%, transparent 55%),
+      radial-gradient(ellipse 130% 130% at 100% 0%, ${colors[1]} 0%, ${colors[1]}80 25%, transparent 55%),
+      radial-gradient(ellipse 130% 130% at 50% 100%, ${colors[2]} 0%, ${colors[2]}80 25%, transparent 55%),
+      linear-gradient(180deg, ${colors[0]}60 0%, ${colors[1]}60 50%, ${colors[2]}60 100%)
+    `;
   }
 
-  // 4개 이상
-  return `linear-gradient(135deg, ${colors[0]} 0%, ${colors[1]} 33%, ${colors[2]} 66%, ${colors[3] || colors[0]} 100%)`
+  // 네 색상 이상 - 각 코너에서 중앙을 향해 확장
+  return `
+    radial-gradient(ellipse 120% 120% at 0% 0%, ${colors[0]} 0%, ${colors[0]}70 20%, transparent 50%),
+    radial-gradient(ellipse 120% 120% at 100% 0%, ${colors[1]} 0%, ${colors[1]}70 20%, transparent 50%),
+    radial-gradient(ellipse 120% 120% at 100% 100%, ${colors[2]} 0%, ${colors[2]}70 20%, transparent 50%),
+    radial-gradient(ellipse 120% 120% at 0% 100%, ${colors[3] || colors[0]} 0%, ${colors[3] || colors[0]}70 20%, transparent 50%),
+    linear-gradient(135deg, ${colors[0]}50 0%, ${colors[1]}50 33%, ${colors[2]}50 66%, ${colors[3] || colors[0]}50 100%)
+  `;
 }
 
-// 색상 밝기 조절 헬퍼 함수
 function adjustColor(hex: string, percent: number): string {
-  const num = Number.parseInt(hex.replace("#", ""), 16)
-  const amt = Math.round(2.55 * percent)
-  const R = Math.min(255, Math.max(0, (num >> 16) + amt))
-  const G = Math.min(255, Math.max(0, ((num >> 8) & 0x00ff) + amt))
-  const B = Math.min(255, Math.max(0, (num & 0x0000ff) + amt))
-  return `#${(0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)}`
+  const num = Number.parseInt(hex.replace("#", ""), 16);
+  const amt = Math.round(2.55 * percent);
+  const R = Math.min(255, Math.max(0, (num >> 16) + amt));
+  const G = Math.min(255, Math.max(0, ((num >> 8) & 0x00ff) + amt));
+  const B = Math.min(255, Math.max(0, (num & 0x0000ff) + amt));
+  return `#${(0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)}`;
 }
 
 interface Card3DProps {
-  benefits: Benefit[]
+  benefits: Benefit[];
 }
 
+// 기본 기울기 상태 (10도 정도 기울어진 상태)
+const DEFAULT_ROTATION = { x: 8, y: -12 };
+
 export function Card3D({ benefits }: Card3DProps) {
-  const cardRef = useRef<HTMLDivElement>(null)
-  const [rotation, setRotation] = useState({ x: 5, y: -5 })
-  const [isDragging, setIsDragging] = useState(false)
-  const lastPos = useRef({ x: 0, y: 0 })
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [rotation, setRotation] = useState(DEFAULT_ROTATION);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [bounceY, setBounceY] = useState(0);
+  const [isBouncing, setIsBouncing] = useState(false);
+  const [idleOffset, setIdleOffset] = useState({ x: 0, y: 0 });
+  const lastPos = useRef({ x: 0, y: 0 });
+  const prevGradientRef = useRef<string>("");
+  const isFirstRender = useRef(true);
+  const bounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const idleAnimationRef = useRef<number | null>(null);
 
   const gradient = useMemo(() => {
-    const colors = getBenefitColors(benefits)
+    const colors = getBenefitColors(benefits);
     return {
       bg: generateGradientFromColors(colors),
       colors: colors,
-    }
-  }, [benefits])
+    };
+  }, [benefits]);
 
-  const handleStart = useCallback((clientX: number, clientY: number) => {
-    setIsDragging(true)
-    lastPos.current = { x: clientX, y: clientY }
-  }, [])
+  // 감쇠 바운스 애니메이션 (농구공이 멈춰가는 느낌: 통! 통통..)
+  const startDampedBounce = useCallback(() => {
+    if (bounceTimeoutRef.current) {
+      clearTimeout(bounceTimeoutRef.current);
+    }
+
+    setIsBouncing(true);
+
+    // 바운스 시퀀스: 점점 작아지는 높이와 빨라지는 간격
+    const bounceSequence = [
+      { y: -20, duration: 200 },  // 첫 번째 큰 바운스 (통!)
+      { y: 0, duration: 150 },
+      { y: -10, duration: 120 },  // 두 번째 중간 바운스 (통)
+      { y: 0, duration: 100 },
+      { y: -4, duration: 80 },    // 세 번째 작은 바운스 (통..)
+      { y: 0, duration: 60 },
+      { y: -1, duration: 50 },    // 마지막 미세 바운스
+      { y: 0, duration: 40 },
+    ];
+
+    let totalDelay = 0;
+    bounceSequence.forEach((step, index) => {
+      bounceTimeoutRef.current = setTimeout(() => {
+        setBounceY(step.y);
+        if (index === bounceSequence.length - 1) {
+          setIsBouncing(false);
+        }
+      }, totalDelay);
+      totalDelay += step.duration;
+    });
+  }, []);
+
+  // 처음 마운트될 때 또는 그라데이션이 변경될 때 애니메이션 실행
+  useEffect(() => {
+    if (isFirstRender.current) {
+      // 첫 렌더링 시 입장 애니메이션 - 부드럽고 우아하게 회전
+      isFirstRender.current = false;
+      setIsSpinning(true);
+      setRotation({ x: -10, y: 180 });
+
+      setTimeout(() => {
+        setRotation(DEFAULT_ROTATION);
+        setTimeout(() => setIsSpinning(false), 1000);
+      }, 1200);
+    } else if (prevGradientRef.current !== gradient.bg) {
+      // 그라데이션 변경 시 - 회전 없이 감쇠 바운스만
+      startDampedBounce();
+    }
+
+    prevGradientRef.current = gradient.bg;
+  }, [gradient.bg, startDampedBounce]);
+
+  // Idle 애니메이션 - 가만히 있을 때 살짝살짝 흔들림
+  useEffect(() => {
+    let startTime: number;
+
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+
+      // 드래그 중이거나 스피닝/바운싱 중이면 idle 애니메이션 멈춤
+      if (!isDragging && !isSpinning && !isBouncing) {
+        // 부드러운 사인파 움직임 (서로 다른 주기로 x, y 움직임)
+        const offsetX = Math.sin(elapsed * 0.0008) * 2;  // 느린 좌우 흔들림
+        const offsetY = Math.sin(elapsed * 0.0012) * 1.5; // 약간 다른 주기의 상하 흔들림
+        setIdleOffset({ x: offsetX, y: offsetY });
+      } else {
+        setIdleOffset({ x: 0, y: 0 });
+      }
+
+      idleAnimationRef.current = requestAnimationFrame(animate);
+    };
+
+    idleAnimationRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (idleAnimationRef.current) {
+        cancelAnimationFrame(idleAnimationRef.current);
+      }
+    };
+  }, [isDragging, isSpinning, isBouncing]);
+
+  // 클린업
+  useEffect(() => {
+    return () => {
+      if (bounceTimeoutRef.current) {
+        clearTimeout(bounceTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleStart = useCallback(
+    (clientX: number, clientY: number) => {
+      if (isSpinning) return;
+      setIsDragging(true);
+      lastPos.current = { x: clientX, y: clientY };
+    },
+    [isSpinning]
+  );
 
   const handleMove = useCallback(
     (clientX: number, clientY: number) => {
-      if (!isDragging) return
-      const deltaX = clientX - lastPos.current.x
-      const deltaY = clientY - lastPos.current.y
+      if (!isDragging || isSpinning) return;
+      const deltaX = clientX - lastPos.current.x;
+      const deltaY = clientY - lastPos.current.y;
       setRotation((prev) => ({
-        x: Math.max(-30, Math.min(30, prev.x - deltaY * 0.4)),
-        y: Math.max(-40, Math.min(40, prev.y + deltaX * 0.4)),
-      }))
-      lastPos.current = { x: clientX, y: clientY }
+        x: Math.max(-20, Math.min(20, prev.x - deltaY * 0.3)),
+        y: Math.max(-30, Math.min(30, prev.y + deltaX * 0.3)),
+      }));
+      lastPos.current = { x: clientX, y: clientY };
     },
-    [isDragging],
-  )
+    [isDragging, isSpinning]
+  );
 
-  const handleEnd = useCallback(() => setIsDragging(false), [])
+  const handleEnd = useCallback(() => setIsDragging(false), []);
 
-  const onMouseDown = (e: React.MouseEvent) => handleStart(e.clientX, e.clientY)
-  const onMouseMove = (e: React.MouseEvent) => handleMove(e.clientX, e.clientY)
-  const onMouseUp = () => handleEnd()
-  const onMouseLeave = () => handleEnd()
-  const onTouchStart = (e: React.TouchEvent) => handleStart(e.touches[0].clientX, e.touches[0].clientY)
-  const onTouchMove = (e: React.TouchEvent) => handleMove(e.touches[0].clientX, e.touches[0].clientY)
-  const onTouchEnd = () => handleEnd()
+  const onMouseDown = (e: React.MouseEvent) =>
+    handleStart(e.clientX, e.clientY);
+  const onMouseMove = (e: React.MouseEvent) => handleMove(e.clientX, e.clientY);
+  const onMouseUp = () => handleEnd();
+  const onMouseLeave = () => handleEnd();
+  const onTouchStart = (e: React.TouchEvent) =>
+    handleStart(e.touches[0].clientX, e.touches[0].clientY);
+  const onTouchMove = (e: React.TouchEvent) =>
+    handleMove(e.touches[0].clientX, e.touches[0].clientY);
+  const onTouchEnd = () => handleEnd();
 
   return (
-    <div className="w-full h-full flex items-center justify-center p-4" style={{ perspective: "1200px" }}>
+    <div
+      className="w-full h-full flex flex-col items-center justify-center p-4"
+      style={{ perspective: "1000px" }}
+    >
       <div
         ref={cardRef}
         onMouseDown={onMouseDown}
@@ -232,199 +311,126 @@ export function Card3D({ benefits }: Card3DProps) {
         onTouchEnd={onTouchEnd}
         className="relative cursor-grab active:cursor-grabbing select-none"
         style={{
-          width: "300px",
-          height: "190px",
+          width: "320px",
+          height: "240px",
           transformStyle: "preserve-3d",
-          transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
-          transition: isDragging ? "none" : "transform 0.5s cubic-bezier(0.23, 1, 0.32, 1)",
+          transform: `rotateX(${rotation.x + idleOffset.y}deg) rotateY(${rotation.y + idleOffset.x}deg) translateY(${bounceY}px)`,
+          transition: isDragging
+            ? "none"
+            : isSpinning
+            ? "transform 1.2s cubic-bezier(0.23, 1, 0.32, 1)"
+            : isBouncing
+            ? "transform 0.08s ease-out"
+            : "transform 0.5s ease-out",
         }}
       >
         {/* 카드 본체 */}
         <div
-          className="absolute inset-0 rounded-xl overflow-hidden"
+          className="absolute inset-0 rounded-2xl overflow-hidden"
           style={{
             background: gradient.bg,
-            boxShadow: `
-              0 30px 60px -15px rgba(0, 0, 0, 0.35),
-              0 0 1px 0 rgba(0,0,0,0.3),
-              inset 0 0 0 1px rgba(255,255,255,0.15)
-            `,
+            boxShadow: "0 20px 40px -10px rgba(0, 0, 0, 0.25)",
             backfaceVisibility: "hidden",
+            transition: "background 0.6s ease-in-out",
           }}
         >
-          {/* 글로시 하이라이트 */}
+          {/* 심플한 광택 효과 */}
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
-              background: `
-                linear-gradient(
-                  105deg,
-                  rgba(255,255,255,0.4) 0%,
-                  rgba(255,255,255,0.1) 40%,
-                  transparent 50%,
-                  transparent 100%
-                )
-              `,
+              background:
+                "linear-gradient(135deg, rgba(255,255,255,0.25) 0%, transparent 50%, transparent 100%)",
             }}
           />
 
           {/* 카드 콘텐츠 */}
           <div className="absolute inset-0 p-5 flex flex-col justify-between">
-            {/* 상단: IC 칩 */}
+            {/* 상단 */}
             <div className="flex items-start justify-between">
+              {/* IC 칩 - 심플한 디자인 */}
               <div
-                className="relative"
+                className="w-10 h-8 rounded-md"
                 style={{
-                  width: "45px",
-                  height: "34px",
-                  borderRadius: "5px",
                   background:
-                    "linear-gradient(160deg, #F7E7A0 0%, #D4AF37 20%, #C5A028 50%, #B8922A 80%, #A67C00 100%)",
-                  boxShadow: `
-                    0 2px 4px rgba(0,0,0,0.3),
-                    0 1px 2px rgba(0,0,0,0.2),
-                    inset 0 1px 0 rgba(255,255,255,0.5),
-                    inset 0 -1px 0 rgba(0,0,0,0.15)
-                  `,
+                    "linear-gradient(145deg, #F7E7A0 0%, #D4AF37 50%, #B8922A 100%)",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
                 }}
-              >
-                {/* 칩 내부 패턴 - 실제 EMV 칩 레이아웃 */}
-                <div className="absolute inset-[3px]">
-                  {/* 좌측 큰 패드 */}
-                  <div
-                    className="absolute left-0 top-0 bottom-0 rounded-l-sm"
-                    style={{
-                      width: "45%",
-                      background: "linear-gradient(180deg, #CFAA45 0%, #B8922A 50%, #A67C00 100%)",
-                      boxShadow: "inset 0 0 1px rgba(0,0,0,0.4)",
-                    }}
-                  />
-                  {/* 우측 상단 작은 패드들 */}
-                  <div className="absolute right-0 top-0 flex flex-col gap-[2px]" style={{ width: "50%" }}>
-                    <div
-                      className="h-[9px] rounded-r-sm"
-                      style={{
-                        background: "linear-gradient(180deg, #E8D070 0%, #C5A028 100%)",
-                        boxShadow: "inset 0 0 1px rgba(0,0,0,0.3)",
-                      }}
-                    />
-                    <div
-                      className="h-[9px] rounded-r-sm"
-                      style={{
-                        background: "linear-gradient(180deg, #CFAA45 0%, #B8922A 100%)",
-                        boxShadow: "inset 0 0 1px rgba(0,0,0,0.35)",
-                      }}
-                    />
-                    <div
-                      className="h-[9px] rounded-r-sm"
-                      style={{
-                        background: "linear-gradient(180deg, #E8D070 0%, #C5A028 100%)",
-                        boxShadow: "inset 0 0 1px rgba(0,0,0,0.3)",
-                      }}
-                    />
-                  </div>
-                  {/* 중앙 분리선 */}
-                  <div
-                    className="absolute top-0 bottom-0"
-                    style={{
-                      left: "45%",
-                      width: "1px",
-                      background: "linear-gradient(180deg, rgba(0,0,0,0.3), rgba(0,0,0,0.15), rgba(0,0,0,0.3))",
-                    }}
-                  />
-                </div>
-                {/* 칩 표면 광택 */}
-                <div
-                  className="absolute inset-0 rounded-[5px]"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, rgba(255,255,255,0.35) 0%, transparent 40%, transparent 60%, rgba(255,255,255,0.1) 100%)",
-                  }}
-                />
-              </div>
+              />
 
-              {/* NFC 아이콘 */}
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style={{ opacity: 0.6 }}>
-                <path
-                  d="M12 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10 10-4.5 10-10 10z"
-                  stroke="rgba(255,255,255,0.8)"
-                  strokeWidth="1.5"
-                  fill="none"
-                />
+              {/* 컨택리스 아이콘 */}
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                style={{ opacity: 0.7 }}
+              >
                 <path
                   d="M8.5 12a3.5 3.5 0 013.5-3.5"
-                  stroke="rgba(255,255,255,0.8)"
-                  strokeWidth="1.5"
+                  stroke="rgba(255,255,255,0.9)"
+                  strokeWidth="2"
                   strokeLinecap="round"
                 />
-                <path d="M6 12a6 6 0 016-6" stroke="rgba(255,255,255,0.8)" strokeWidth="1.5" strokeLinecap="round" />
+                <path
+                  d="M5.5 12a6.5 6.5 0 016.5-6.5"
+                  stroke="rgba(255,255,255,0.9)"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M2.5 12a9.5 9.5 0 019.5-9.5"
+                  stroke="rgba(255,255,255,0.9)"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
               </svg>
             </div>
 
-            {/* 하단: 카드 정보 */}
-            <div className="space-y-3">
+            {/* 하단 */}
+            <div className="space-y-2">
               {/* 카드 번호 */}
               <p
-                className="font-mono text-sm tracking-[0.2em]"
+                className="font-mono text-sm tracking-widest"
                 style={{
                   color: "rgba(255,255,255,0.9)",
-                  textShadow: "0 1px 3px rgba(0,0,0,0.3)",
-                  letterSpacing: "0.2em",
+                  textShadow: "0 1px 2px rgba(0,0,0,0.2)",
                 }}
               >
                 •••• •••• •••• ••••
               </p>
 
-              {/* 카드 소유자 & 유효기간 & 로고 */}
+              {/* 카드홀더 & 유효기간 & 로고 */}
               <div className="flex items-end justify-between">
-                <div className="flex gap-6">
+                <div className="flex gap-5">
                   <div>
                     <p
-                      className="text-[9px] uppercase tracking-wider mb-0.5"
+                      className="text-[10px] uppercase tracking-wider"
                       style={{ color: "rgba(255,255,255,0.5)" }}
                     >
-                      Card Holder
+                      NAME
                     </p>
                     <p
-                      className="text-xs font-medium tracking-wide"
-                      style={{
-                        color: "rgba(255,255,255,0.85)",
-                        textShadow: "0 1px 2px rgba(0,0,0,0.2)",
-                      }}
+                      className="text-xs font-medium"
+                      style={{ color: "rgba(255,255,255,0.9)" }}
                     >
-                      YOUR NAME
+                      홍길동
                     </p>
                   </div>
                   <div>
                     <p
-                      className="text-[9px] uppercase tracking-wider mb-0.5"
+                      className="text-[10px] uppercase tracking-wider"
                       style={{ color: "rgba(255,255,255,0.5)" }}
                     >
-                      Expires
+                      VALID
                     </p>
                     <p
-                      className="text-xs font-medium tracking-wide"
-                      style={{
-                        color: "rgba(255,255,255,0.85)",
-                        textShadow: "0 1px 2px rgba(0,0,0,0.2)",
-                      }}
+                      className="text-xs font-medium"
+                      style={{ color: "rgba(255,255,255,0.9)" }}
                     >
-                      ••/••
+                      12/28
                     </p>
                   </div>
                 </div>
-
-                {/* 로고 */}
-                <p
-                  className="font-bold text-2xl tracking-wide"
-                  style={{
-                    color: "rgba(255,255,255,0.95)",
-                    textShadow: "0 2px 4px rgba(0,0,0,0.25)",
-                    fontFamily: "system-ui, -apple-system, sans-serif",
-                  }}
-                >
-                  Orott
-                </p>
               </div>
             </div>
           </div>
@@ -432,23 +438,52 @@ export function Card3D({ benefits }: Card3DProps) {
 
         {/* 카드 뒷면 */}
         <div
-          className="absolute inset-0 rounded-xl"
+          className="absolute inset-0 rounded-2xl"
           style={{
-            background: "linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%)",
+            background: "#191919",
             transform: "rotateY(180deg)",
             backfaceVisibility: "hidden",
           }}
         >
-          {/* 마그네틱 띠 */}
-          <div className="absolute top-8 left-0 right-0 h-10" style={{ background: "#111" }} />
-          {/* 서명란 */}
-          <div className="absolute top-24 left-4 right-16 h-8 rounded" style={{ background: "#f5f5f5" }} />
-          {/* CVV */}
-          <div className="absolute top-24 right-4 flex items-center h-8">
-            <span className="text-white/60 text-xs font-mono">•••</span>
+          <div
+            className="absolute top-6 left-0 right-0 h-10"
+            style={{ background: "#333333" }}
+          />
+          <div className="absolute top-20 left-4 right-16 h-8 rounded bg-white" />
+          <div className="absolute top-20 right-4 flex items-center h-8">
+            <span className="text-white/60 text-xs font-mono">CVV</span>
           </div>
         </div>
       </div>
+
+      {/* 드래그 힌트 화살표 */}
+      <div className="flex items-center gap-3 mt-3">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#D4D4D4"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+        <span className="text-[11px] text-[#D4D4D4]">드래그하여 회전</span>
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#D4D4D4"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
+      </div>
     </div>
-  )
+  );
 }

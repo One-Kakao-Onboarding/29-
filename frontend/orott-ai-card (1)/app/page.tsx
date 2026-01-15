@@ -533,47 +533,60 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-100 flex flex-col items-center justify-center gap-6 p-8">
-      <div className="flex items-center gap-4">
-        <div className="flex gap-2">
+    <main className="min-h-screen bg-[#F7F7F7] flex flex-col items-center justify-center gap-8 p-6 md:p-8">
+      {/* 상단 컨트롤 영역 */}
+      <div className="flex flex-col sm:flex-row items-center gap-4 rounded-2xl">
+        {/* 탭 버튼 */}
+        <div className="flex gap-2 p-1 bg-white rounded-xl shadow-sm">
           <Button
             onClick={() => setActiveSimulatorTab("kakaoTalk")}
-            variant={activeSimulatorTab === "kakaoTalk" ? "default" : "outline"}
-            className={`${activeSimulatorTab === "kakaoTalk" ? "bg-[#fee500] text-gray-900 hover:bg-[#fdd835]" : "bg-white text-gray-700 hover:bg-gray-50"}`}
+            variant="ghost"
+            className={`px-5 py-2 rounded-xl font-medium transition-all duration-200 ${
+              activeSimulatorTab === "kakaoTalk"
+                ? "bg-[#FEE500] text-[#191919] shadow-sm"
+                : "text-[#767676] hover:text-[#191919] hover:bg-[#F7F7F7] active:bg-[#E5E5E5]"
+            }`}
           >
             카카오톡
           </Button>
           <Button
             onClick={() => setActiveSimulatorTab("kakaoPay")}
-            variant={activeSimulatorTab === "kakaoPay" ? "default" : "outline"}
-            className={`${activeSimulatorTab === "kakaoPay" ? "bg-[#fee500] text-gray-900 hover:bg-[#fdd835]" : "bg-white text-gray-700 hover:bg-gray-50"}`}
+            variant="ghost"
+            className={`px-5 py-2 rounded-xl font-medium transition-all duration-200 ${
+              activeSimulatorTab === "kakaoPay"
+                ? "bg-[#FEE500] text-[#191919] shadow-sm"
+                : "text-[#767676] hover:text-[#191919] hover:bg-[#F7F7F7] active:bg-[#E5E5E5]"
+            }`}
           >
             카카오페이
           </Button>
         </div>
 
+        {/* 분석 버튼 */}
         <Button
           onClick={handleAnalyze}
           disabled={analysisState === "loading"}
-          className="px-6 py-2 bg-purple-600 text-white font-bold hover:bg-purple-700 disabled:opacity-50"
+          className="px-6 py-2.5 bg-[#191919] text-white font-medium rounded-xl hover:bg-[#333333] active:bg-[#000000] disabled:opacity-50 transition-all duration-200 shadow-sm"
         >
           <Sparkles className="w-4 h-4 mr-2" />
-          AI로 분석하고 혜택 추천받기
+          맞춤 혜택 추천받기
         </Button>
 
+        {/* 데모 버튼 */}
         {analysisState === "complete" && !showReport && (
           <Button
             onClick={handleShowReport}
             variant="outline"
-            className="px-4 py-2 bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+            className="px-5 py-2.5 bg-white border-[#E5E5E5] text-[#555555] font-medium rounded-xl hover:bg-[#F7F7F7] hover:border-[#D4D4D4] active:bg-[#E5E5E5] transition-all duration-200"
           >
             <FastForward className="w-4 h-4 mr-2" />
-            (Demo) 1년 뒤 라이프스타일 변화
+            1년 뒤 변화 보기
           </Button>
         )}
       </div>
 
-      <div className="flex items-center gap-8">
+      {/* 메인 컨텐츠 영역 */}
+      <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-8">
         <ContextSimulator
           chatMessages={chatMessages}
           onSendMessage={handleSendMessage}
