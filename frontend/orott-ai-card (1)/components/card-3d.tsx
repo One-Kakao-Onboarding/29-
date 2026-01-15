@@ -274,8 +274,10 @@ export function Card3D({ benefits }: Card3DProps) {
       const deltaX = clientX - lastPos.current.x;
       const deltaY = clientY - lastPos.current.y;
       setRotation((prev) => ({
-        x: Math.max(-20, Math.min(20, prev.x - deltaY * 0.3)),
-        y: Math.max(-30, Math.min(30, prev.y + deltaX * 0.3)),
+        // X축: -45도 ~ 45도 (위아래 기울기)
+        x: Math.max(-45, Math.min(45, prev.x - deltaY * 0.5)),
+        // Y축: 무제한 회전 (뒷면 볼 수 있도록)
+        y: prev.y + deltaX * 0.8,
       }));
       lastPos.current = { x: clientX, y: clientY };
     },
@@ -283,6 +285,17 @@ export function Card3D({ benefits }: Card3DProps) {
   );
 
   const handleEnd = useCallback(() => setIsDragging(false), []);
+
+  // 더블클릭/더블탭으로 카드 뒤집기
+  const handleFlip = useCallback(() => {
+    if (isSpinning) return;
+    setIsSpinning(true);
+    setRotation((prev) => ({
+      x: prev.x,
+      y: prev.y + 180, // 180도 회전하여 뒤집기
+    }));
+    setTimeout(() => setIsSpinning(false), 600);
+  }, [isSpinning]);
 
   const onMouseDown = (e: React.MouseEvent) =>
     handleStart(e.clientX, e.clientY);
@@ -309,6 +322,7 @@ export function Card3D({ benefits }: Card3DProps) {
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
+        onDoubleClick={handleFlip}
         className="relative cursor-grab active:cursor-grabbing select-none"
         style={{
           width: "320px",
@@ -477,33 +491,36 @@ export function Card3D({ benefits }: Card3DProps) {
         </div>
       </div>
 
-      {/* 드래그 힌트 화살표 */}
-      <div className="flex items-center gap-3 mt-3">
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#D4D4D4"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <polyline points="15 18 9 12 15 6" />
-        </svg>
-        <span className="text-[11px] text-[#D4D4D4]">드래그하여 회전</span>
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#D4D4D4"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <polyline points="9 18 15 12 9 6" />
-        </svg>
+      {/* 드래그 힌트 */}
+      <div className="flex flex-col items-center gap-1 mt-3">
+        <div className="flex items-center gap-3">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#D4D4D4"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+          <span className="text-[11px] text-[#D4D4D4]">드래그하여 회전</span>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#D4D4D4"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </div>
+        <span className="text-[10px] text-[#999999]">더블클릭으로 뒤집기</span>
       </div>
     </div>
   );
