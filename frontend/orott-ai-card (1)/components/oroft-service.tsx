@@ -171,6 +171,7 @@ export function OrottService({
                     benefit={benefit}
                     index={idx}
                     alternatives={alternativeBenefits}
+                    selectedBenefits={benefits}
                     onSwap={(newBenefit) => onSwapBenefit(benefit.id, newBenefit)}
                   />
                 ))}

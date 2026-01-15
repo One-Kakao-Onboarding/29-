@@ -232,6 +232,7 @@ export async function getChatHistory(
 
 /**
  * Transform API RecommendedBenefit to frontend Benefit format
+ * Note: title uses category (카페, OTT) not brand (스타벅스, 넷플릭스)
  */
 export function transformToBenefit(rec: RecommendedBenefit): Benefit {
   // Truncate reason to 15 characters max
@@ -241,7 +242,7 @@ export function transformToBenefit(rec: RecommendedBenefit): Benefit {
 
   return {
     id: rec.benefit_option_id,
-    title: rec.benefit_name,
+    title: rec.category, // Use category as title (카페, OTT, 영화관, etc.)
     discount: formatDiscount(rec.benefit_type, rec.discount_rate, rec.monthly_limit),
     icon: CATEGORY_ICONS[rec.category] || "💳",
     reason: truncatedReason,

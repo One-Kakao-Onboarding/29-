@@ -345,18 +345,8 @@ export function Card3D({ benefits }: Card3DProps) {
 
           {/* 카드 콘텐츠 */}
           <div className="absolute inset-0 p-5 flex flex-col justify-between">
-            {/* 상단 */}
-            <div className="flex items-start justify-between">
-              {/* IC 칩 - 심플한 디자인 */}
-              <div
-                className="w-10 h-8 rounded-md"
-                style={{
-                  background:
-                    "linear-gradient(145deg, #F7E7A0 0%, #D4AF37 50%, #B8922A 100%)",
-                  boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
-                }}
-              />
-
+            {/* 상단 - 컨택리스 아이콘만 */}
+            <div className="flex items-start justify-end">
               {/* 컨택리스 아이콘 */}
               <svg
                 width="20"
@@ -383,6 +373,37 @@ export function Card3D({ benefits }: Card3DProps) {
                   strokeWidth="2"
                   strokeLinecap="round"
                 />
+              </svg>
+            </div>
+
+            {/* IC 칩 - 좌측 중간 */}
+            <div
+              className="w-12 h-9 rounded-md absolute left-5 top-1/2 -translate-y-1/2 overflow-hidden"
+              style={{
+                background:
+                  "linear-gradient(145deg, #F7E7A0 0%, #D4AF37 50%, #B8922A 100%)",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+              }}
+            >
+              {/* 회로 패턴 */}
+              <svg
+                className="absolute inset-0 w-full h-full"
+                viewBox="0 0 48 36"
+                fill="none"
+              >
+                {/* 가로 실금 */}
+                <line x1="0" y1="12" x2="48" y2="12" stroke="#B8922A" strokeWidth="0.5" />
+                <line x1="0" y1="18" x2="48" y2="18" stroke="#B8922A" strokeWidth="0.5" />
+                <line x1="0" y1="24" x2="48" y2="24" stroke="#B8922A" strokeWidth="0.5" />
+                {/* 세로 실금 */}
+                <line x1="12" y1="0" x2="12" y2="36" stroke="#B8922A" strokeWidth="0.5" />
+                <line x1="24" y1="0" x2="24" y2="36" stroke="#B8922A" strokeWidth="0.5" />
+                <line x1="36" y1="0" x2="36" y2="36" stroke="#B8922A" strokeWidth="0.5" />
+                {/* 중앙 접점 영역 */}
+                <rect x="14" y="8" width="8" height="8" fill="#C9A227" rx="1" />
+                <rect x="26" y="8" width="8" height="8" fill="#C9A227" rx="1" />
+                <rect x="14" y="20" width="8" height="8" fill="#C9A227" rx="1" />
+                <rect x="26" y="20" width="8" height="8" fill="#C9A227" rx="1" />
               </svg>
             </div>
 

@@ -10,10 +10,16 @@ interface BenefitCardProps {
   benefit: Benefit
   index: number
   alternatives: Benefit[]
+  selectedBenefits: Benefit[] // 현재 선택된 모든 혜택 (중복 방지용)
   onSwap: (newBenefit: Benefit) => void
 }
 
-export function BenefitCard({ benefit, index, alternatives, onSwap }: BenefitCardProps) {
+export function BenefitCard({ benefit, index, alternatives, selectedBenefits, onSwap }: BenefitCardProps) {
+  // 다른 슬롯에서 선택된 카테고리만 제외 (현재 혜택의 카테고리는 제외하지 않음)
+  const otherSelectedCategories = selectedBenefits
+    .filter(b => b.id !== benefit.id)
+    .map(b => b.category)
+  const availableAlternatives = alternatives.filter(alt => !otherSelectedCategories.includes(alt.category))
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -96,8 +102,8 @@ export function BenefitCard({ benefit, index, alternatives, onSwap }: BenefitCar
                 animate={{ y: 0 }}
                 exit={{ y: "100%" }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl z-50 overflow-hidden"
-                style={{ maxHeight: "70%" }}
+                className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl z-50 overflow-hidden flex flex-col"
+                style={{ maxHeight: "85%" }}
               >
                 {/* 핸들바 */}
                 <div className="flex justify-center pt-3 pb-2">
@@ -134,9 +140,9 @@ export function BenefitCard({ benefit, index, alternatives, onSwap }: BenefitCar
                 </div>
 
                 {/* 대체 혜택 목록 */}
-                <div className="overflow-y-auto" style={{ maxHeight: "calc(100% - 180px)" }}>
+                <div className="flex-1 overflow-y-auto pb-6">
                   <p className="text-xs text-[#767676] px-5 pt-4 pb-2">다른 혜택으로 변경</p>
-                  {alternatives.map((alt) => (
+                  {availableAlternatives.map((alt) => (
                     <button
                       key={alt.id}
                       onClick={() => {
@@ -159,8 +165,6 @@ export function BenefitCard({ benefit, index, alternatives, onSwap }: BenefitCar
                   ))}
                 </div>
 
-                {/* 하단 여백 (safe area) */}
-                <div className="h-6 bg-white" />
               </motion.div>
             </>
           )}
